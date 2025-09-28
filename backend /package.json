@@ -17,9 +17,12 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.11.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
     "multer": "^2.0.2",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "pdf-parse": "^1.1.1",
+    "python-shell": "^5.0.0"
   }
 }
