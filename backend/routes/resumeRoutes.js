@@ -18,7 +18,7 @@ router.post("/upload/:userId", upload.single("resume"), async (req, res) => {
 
     // 2. Extract text using your utility
     const extractedText = await extractTextFromFile(filePath);
-
+    console.log("Extracted text:", extractedText);
     // 3. Save in DB
     const newResume = new Resume({
       userId: req.params.userId,
