@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Resume Scanner</title>
+</head>
+<body>
+  <h1>Upload Job & Resumes</h1>
+  <form id="uploadForm">
+    <label>Job Description:</label><br>
+    <textarea id="jobDescription" rows="5" cols="50"></textarea><br><br>
+
+    <label>Upload Resumes:</label><br>
+    <input type="file" id="resumes" multiple><br><br>
+
+    <button type="submit">Rank Resumes</button>
+  </form>
+
+  <h2>Results:</h2>
+  <pre id="results"></pre>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const jobDescription = document.getElementById('jobDescription').value;
+      const files = document.getElementById('resumes').files;
+
+      const formData = new FormData();
+      formData.append('jobDescription', jobDescription);
+      for (let i = 0; i < files.length; i++) {
+        formData.append('resumes', files[i]);
+      }
+
+      const response = await fetch('http://localhost:5000/api/jobs/rank', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>

@@ -6,14 +6,10 @@ import userRoutes from "./routes/UserRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 
-
-
-
 dotenv.config();
 connectDB();
 
 const app = express();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
