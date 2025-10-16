@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rank Resumes - Auto Resume Shortlister</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Additional styles specific to rank.html */
+    .form-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: var(--surface-dark);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-title {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1.8rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background-color: var(--surface-darker);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    .submit-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+    
+    .submit-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .back-link:hover {
+      color: var(--primary-color);
+    }
+    
+    .results-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: var(--surface-dark);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .results-title {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1.5rem;
+    }
+    
+    #results {
+      list-style-type: none;
+    }
+    
+    .result-item {
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      background-color: var(--surface-darker);
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-color);
+      transition: transform 0.2s ease;
+    }
+    
+    .result-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .resume-id {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+    
+    .score {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      min-width: 100px;
+      text-align: center;
+    }
+    
+    .score.high {
+      background-color: var(--success-color);
+    }
+    
+    .score.medium {
+      background-color: var(--warning-color);
+    }
+    
+    .score.low {
+      background-color: var(--error-color);
+    }
+    
+    .rank-badge {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 0.2rem 0.8rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+    
+    .no-results {
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 3rem;
+      background-color: var(--surface-darker);
+      border-radius: 8px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+    
+    .loading-spinner {
+      border: 3px solid var(--surface-darker);
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .job-info {
+      background-color: var(--surface-darker);
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .job-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .job-description {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Auto Resume Shortlister</h1>
+      <p>Rank resumes based on job requirements</p>
+    </div>
+  </header>
+  
+  <main class="container">
+    <div class="form-container">
+      <h2 class="form-title">Rank Resumes for a Job</h2>
+      <form id="rankForm">
+        <div class="form-group">
+          <label for="jobId">Job ID</label>
+          <input type="text" id="jobId" placeholder="Enter Job ID" required />
+        </div>
+        
+        <button type="submit" class="submit-btn">Rank Resumes</button>
+      </form>
+      
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </div>
+    
+    <div class="results-container" id="resultsContainer" style="display: none;">
+      <h3 class="results-title">Ranking Results</h3>
+      <div id="loading" class="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Processing resumes with TF-IDF algorithm...</p>
+      </div>
+      <ul id="results"></ul>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="container">
+      <p>Auto Resume Shortlister &copy; 2023 | Powered by TF-IDF Algorithm</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("rankForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const jobId = document.getElementById("jobId").value.trim();
+      
+      if (!jobId) {
+        alert('Please enter a Job ID');
+        return;
+      }
+      
+      // Show loading state and results container
+      document.getElementById("resultsContainer").style.display = "block";
+      document.getElementById("loading").style.display = "block";
+      
+      const list = document.getElementById("results");
+      list.innerHTML = "";
+
+      try {
+        const res = await fetch(`http://localhost:8000/api/jobs/rank/${jobId}`);
+        const data = await res.json();
+
+        // Hide loading
+        document.getElementById("loading").style.display = "none";
+
+        if (data.rankedResumes && data.rankedResumes.length > 0) {
+          // Sort by score in descending order
+          const sortedResumes = data.rankedResumes.sort((a, b) => b.score - a.score);
+          
+          sortedResumes.forEach((r, index) => {
+            const li = document.createElement("li");
+            li.className = "result-item";
+            
+            const scoreClass = getScoreClass(r.score);
+            const rank = index + 1;
+            
+            li.innerHTML = `
+              <div class="result-header">
+                <div>
+                  <span class="rank-badge">#${rank}</span>
+                  <span class="resume-id">Resume ID: ${r.id}</span>
+                </div>
+                <div class="score ${scoreClass}">${r.score.toFixed(3)}</div>
+              </div>
+            `;
+            list.appendChild(li);
+          });
+        } else {
+          list.innerHTML = `
+            <div class="no-results">
+              <h3>No Results Found</h3>
+              <p>${data.error || "No resumes have been submitted for this job yet, or the Job ID is incorrect."}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error("Error fetching rankings:", error);
+        document.getElementById("loading").style.display = "none";
+        list.innerHTML = `
+          <div class="no-results">
+            <h3>Error Loading Results</h3>
+            <p>There was a problem fetching the ranking data. Please check if the server is running and try again.</p>
+          </div>
+        `;
+      }
+    });
+
+    function getScoreClass(score) {
+      if (score >= 0.8) return 'high';
+      if (score >= 0.6) return 'medium';
+      return 'low';
+    }
+  </script>
+</body>
+</html>

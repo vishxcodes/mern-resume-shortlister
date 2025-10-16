@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Resume - Auto Resume Shortlister</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Additional styles specific to upload.html */
+    .form-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: var(--surface-dark);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-title {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 1.8rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background-color: var(--surface-darker);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    
+    .file-input-container {
+      position: relative;
+    }
+    
+    .file-input {
+      padding: 0.8rem 1rem;
+      background-color: var(--surface-darker);
+      border: 1px dashed var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .file-input:hover {
+      border-color: var(--primary-color);
+      background-color: rgba(58, 134, 255, 0.05);
+    }
+    
+    .file-input input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .file-name {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    
+    .submit-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+    
+    .submit-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .back-link:hover {
+      color: var(--primary-color);
+    }
+    
+    .supported-formats {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Auto Resume Shortlister</h1>
+      <p>Upload your resume for job applications</p>
+    </div>
+  </header>
+  
+  <main class="container">
+    <div class="form-container">
+      <h2 class="form-title">Upload Resume</h2>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label for="userId">User ID</label>
+          <input type="text" id="userId" placeholder="Enter your User ID" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="resume">Resume File</label>
+          <div class="file-input-container">
+            <div class="file-input">
+              <span>Click to select resume file</span>
+              <input type="file" id="resume" name="resume" required />
+            </div>
+          </div>
+          <div class="file-name" id="fileName">No file selected</div>
+        </div>
+        
+        <button type="submit" class="submit-btn">Upload Resume</button>
+      </form>
+      
+      <div class="supported-formats">
+        Supported formats: PDF, DOC, DOCX, TXT
+      </div>
+      
+      <a href="index.html" class="back-link">← Back to Home</a>
+    </div>
+  </main>
+  
+  <footer>
+    <div class="container">
+      <p>Auto Resume Shortlister &copy; 2023 | Powered by TF-IDF Algorithm</p>
+    </div>
+  </footer>
+
+  <script src="js/upload.js"></script>
+  <script>
+    // Simple script to show selected file name
+    document.getElementById('resume').addEventListener('change', function(e) {
+      const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+      document.getElementById('fileName').textContent = fileName;
+    });
+  </script>
+</body>
+</html>
