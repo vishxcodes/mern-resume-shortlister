@@ -11,6 +11,10 @@
     <div class="container">
       <h1>Auto Resume Shortlister</h1>
       <p>Streamline your hiring process with AI-powered resume ranking</p>
+      <div id="authButtons">
+        <button id="loginBtn">Login</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+      </div>
     </div>
   </header>
   
@@ -38,8 +42,21 @@
   
   <footer>
     <div class="container">
-      <p>Auto Resume Shortlister &copy; 2023 | Powered by TF-IDF Algorithm</p>
+      <p>Auto Resume Shortlister &copy; 2025 | Powered by TF-IDF Algorithm</p>
     </div>
   </footer>
+
+  <script src="js/auth.js"></script>
+  <script>
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const email = prompt("Enter email:");
+      const password = prompt("Enter password:");
+
+      login(email, password);
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+    checkAuthButtons();
+  </script>
 </body>
 </html>
