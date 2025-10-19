@@ -7,7 +7,8 @@ import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 
-dotenv.config();
+dotenv.config({ debug: true });
+
 connectDB();
 
 const app = express();
