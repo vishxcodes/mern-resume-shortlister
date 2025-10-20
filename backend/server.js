@@ -46,6 +46,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+
+// Serve uploaded files publicly
+app.use("/uploads", express.static("uploads"));
+
 // Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

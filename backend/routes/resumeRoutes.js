@@ -33,4 +33,16 @@ router.post("/upload", protect, authorizeRoles("candidate"), upload.single("resu
   }
 });
 
+// ➤ Get current user's resume
+router.get("/me", protect, authorizeRoles("candidate"), async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ userId: req.user._id });
+    if (!resume) return res.status(404).json({ message: "No resume found" });
+    res.json({ resume });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 export default router;
