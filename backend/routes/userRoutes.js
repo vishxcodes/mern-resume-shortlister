@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Register
 router.post("/register", async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role = "candidate" } = req.body;
   try {
     if (!["candidate", "recruiter"].includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
