@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
+
 import nodemailer from "nodemailer";
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
 console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌");
@@ -13,6 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendStatusEmail(to, subject, text) {
+  console.log(`📤 Sending email to ${to}: ${subject}`);
   try {
     await transporter.sendMail({
       from: `"Auto Resume Shortlister" <${process.env.EMAIL_USER}>`,
@@ -20,8 +24,9 @@ export async function sendStatusEmail(to, subject, text) {
       subject,
       text
     });
-    console.log(`📧 Email sent to ${to}`);
+    console.log(`✅ Email sent successfully to ${to}`);
   } catch (err) {
     console.error("❌ Email failed:", err.message);
   }
 }
+
