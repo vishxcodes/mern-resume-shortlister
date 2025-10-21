@@ -6,36 +6,74 @@ import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ➤ Create a new Job (Recruiter Only)
 router.post("/", protect, authorizeRoles("recruiter"), async (req, res) => {
   try {
-    const { title, description } = req.body;
+    const { title, description, role, type, location, experienceLevel } = req.body;
 
+    // 🧩 Basic validation
     if (!title || !description) {
-      return res.status(400).json({ error: "Title and description are required" });
+      return res
+        .status(400)
+        .json({ error: "Title and description are required" });
     }
 
-    // recruiterId now comes from the logged-in user
+    // recruiterId automatically comes from logged-in user
     const job = new Job({
       recruiterId: req.user._id,
       title,
       description,
+      role: role || "Other", // ✅ default fallback values
+      type: type || "Remote",
+      location: location || "Remote",
+      experienceLevel: experienceLevel || "Internship",
     });
 
     await job.save();
-    res.status(201).json({ message: "Job created successfully", job });
+
+    res.status(201).json({
+      message: "Job created successfully",
+      job,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error creating job:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ➤ Get all jobs (Public)
+
 router.get("/", async (req, res) => {
   try {
-    const jobs = await Job.find().populate("recruiterId", "name email");
-    res.json(jobs);
+    const { search, role, type, location, experienceLevel } = req.query;
+    const query = {};
+
+    // 🔍 Full-text search on title/description
+    if (search && search.trim() !== "") {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 🎯 Case-insensitive filter matching
+    if (role && role.trim() !== "") {
+      query.role = { $regex: new RegExp(role, "i") };
+    }
+    if (type && type.trim() !== "") {
+      query.type = { $regex: new RegExp(type, "i") };
+    }
+    if (location && location.trim() !== "") {
+      query.location = { $regex: new RegExp(location, "i") };
+    }
+    if (experienceLevel && experienceLevel.trim() !== "") {
+      query.experienceLevel = { $regex: new RegExp(experienceLevel, "i") };
+    }
+
+    console.log("Applied query:", query); // 👈 for debugging
+
+    const jobs = await Job.find(query).populate("recruiterId", "name email");
+    res.status(200).json(jobs);
   } catch (err) {
+    console.error("Error fetching jobs:", err);
     res.status(500).json({ error: err.message });
   }
 });
