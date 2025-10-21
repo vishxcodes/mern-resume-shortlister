@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import API from "../../api/axiosInstance";
-import { BriefcaseIcon, BuildingIcon, SearchIcon, RotateCcwIcon } from "lucide-react";
+import {
+  BriefcaseIcon,
+  BuildingIcon,
+  SearchIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 
 export default function CandidateJobs() {
   const [jobs, setJobs] = useState([]);
@@ -9,6 +14,23 @@ export default function CandidateJobs() {
   const [type, setType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
   const [loading, setLoading] = useState(true);
+  const [recommendedJobs, setRecommendedJobs] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+
+  //Fetch recommended jobs on mount
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      try {
+        const { data } = await API.get("/jobs/recommended");
+        setRecommendedJobs(data);
+      } catch (err) {
+        console.error("Error fetching recommended jobs:", err);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+    fetchRecommended();
+  }, []);
 
   // 🔍 Fetch jobs based on filters/search
   useEffect(() => {
@@ -37,6 +59,45 @@ export default function CandidateJobs() {
 
   return (
     <div className="space-y-6">
+      {/* 🎯 Recommended Jobs Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4 text-blue-700 dark:text-blue-400">
+          Recommended for You
+        </h2>
+
+        {loadingRecommendations ? (
+          <p className="text-gray-500 dark:text-gray-400">
+            Loading recommendations...
+          </p>
+        ) : recommendedJobs.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400">
+            Upload a resume to get personalized recommendations.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {recommendedJobs.map((job) => (
+              <div
+                key={job._id}
+                className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    {job.title}
+                  </h3>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
+                  {job.description}
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  Match Score: {job.score}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">
         Available Jobs
       </h1>
@@ -104,7 +165,6 @@ export default function CandidateJobs() {
           Reset
         </button>
       </div>
-
       {/* 🧠 Job Results */}
       {loading ? (
         <p className="text-gray-500 dark:text-gray-400 text-center mt-10">

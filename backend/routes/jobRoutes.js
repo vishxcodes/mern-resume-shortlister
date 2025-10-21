@@ -78,6 +78,41 @@ router.get("/", async (req, res) => {
   }
 });
 
+// 📍 Get recommended jobs for the logged-in candidate
+router.get("/recommended", protect, authorizeRoles("candidate"), async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // 🧠 Fetch candidate’s resume text
+    const resume = await Resume.findOne({ userId });
+    if (!resume || !resume.extractedText) {
+      return res.status(404).json({ error: "Upload a resume to get recommendations." });
+    }
+console.log("Found resume:", resume ? "Yes" : "No");
+
+    const allJobs = await Job.find();
+    // Simple text-based similarity (basic version)
+    const recommendations = allJobs
+      .map((job) => {
+        const text = job.description.toLowerCase();
+        const resumeText = resume.extractedText.toLowerCase();
+
+        // basic overlap score
+        const commonWords = resumeText
+          .split(/\W+/)
+          .filter((word) => word.length > 3 && text.includes(word));
+
+        return { ...job._doc, score: commonWords.length };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5); // top 5 jobs
+
+    res.json(recommendations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ➤ Get job by ID (Public)
 router.get("/:id", async (req, res) => {
   try {
