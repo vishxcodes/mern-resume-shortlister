@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../api/axiosInstance";
+import { Link } from "react-router-dom";
 import {
   BriefcaseIcon,
   BuildingIcon,
@@ -17,7 +18,7 @@ export default function CandidateJobs() {
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
-  //Fetch recommended jobs on mount
+  // 🧠 Fetch recommended jobs on mount
   useEffect(() => {
     const fetchRecommended = async () => {
       try {
@@ -76,33 +77,36 @@ export default function CandidateJobs() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {recommendedJobs.map((job) => (
-              <div
+              <Link
                 key={job._id}
-                className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+                to={`/candidate/jobs/${job._id}`}
+                className="block hover:shadow-xl transition-shadow duration-300"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {job.title}
-                  </h3>
+                <div className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300 h-full">
+                  <div className="flex items-center gap-3 mb-3">
+                    <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                      {job.title}
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
+                    {job.description}
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    Match Score: {job.score}
+                  </p>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
-                  {job.description}
-                </p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  Match Score: {job.score}
-                </p>
-              </div>
+              </Link>
             ))}
           </div>
         )}
       </div>
 
+      {/* 🔎 Filter Section */}
       <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">
         Available Jobs
       </h1>
 
-      {/* 🔎 Filter Section */}
       <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow border border-gray-200 dark:border-gray-700 transition-colors duration-300">
         {/* Search */}
         <div className="relative flex-1 min-w-[220px]">
@@ -165,6 +169,7 @@ export default function CandidateJobs() {
           Reset
         </button>
       </div>
+
       {/* 🧠 Job Results */}
       {loading ? (
         <p className="text-gray-500 dark:text-gray-400 text-center mt-10">
@@ -177,48 +182,51 @@ export default function CandidateJobs() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {jobs.map((job) => (
-            <div
+            <Link
               key={job._id}
-              className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+              to={`/candidate/jobs/${job._id}`}
+              className="block hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {job.title}
-                </h3>
-              </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
-                {job.description}
-              </p>
+              <div className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300 h-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    {job.title}
+                  </h3>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
+                  {job.description}
+                </p>
 
-              <p className="text-gray-500 dark:text-gray-400 text-sm flex items-center gap-2 mb-1">
-                <BuildingIcon className="w-4 h-4" />
-                {job.recruiterId?.name || "Anonymous Recruiter"}
-              </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm flex items-center gap-2 mb-1">
+                  <BuildingIcon className="w-4 h-4" />
+                  {job.recruiterId?.name || "Anonymous Recruiter"}
+                </p>
 
-              <div className="flex flex-wrap gap-2 mt-3 text-xs">
-                {job.role && (
-                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
-                    {job.role}
-                  </span>
-                )}
-                {job.type && (
-                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
-                    {job.type}
-                  </span>
-                )}
-                {job.experienceLevel && (
-                  <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full">
-                    {job.experienceLevel}
-                  </span>
-                )}
-                {job.location && (
-                  <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-full">
-                    {job.location}
-                  </span>
-                )}
+                <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                  {job.role && (
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
+                      {job.role}
+                    </span>
+                  )}
+                  {job.type && (
+                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
+                      {job.type}
+                    </span>
+                  )}
+                  {job.experienceLevel && (
+                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full">
+                      {job.experienceLevel}
+                    </span>
+                  )}
+                  {job.location && (
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-full">
+                      {job.location}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

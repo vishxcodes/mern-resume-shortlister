@@ -1,17 +1,23 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import CandidateDashboard from "./pages/CandidateDashboard";
-import RecruiterDashboard from "./pages/RecruiterDashboard";
+import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Candidate pages
+import CandidateDashboard from "./pages/CandidateDashboard";
 import CandidateOverview from "./pages/candidate/CandidateOverview";
 import CandidateResume from "./pages/candidate/CandidateResume";
 import CandidateJobs from "./pages/candidate/CandidateJobs";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { ThemeProvider } from "./context/ThemeContext";
+import CandidateJobDetails from "./pages/candidate/CandidateJobDetails";
+import CandidateApplications from "./pages/candidate/CandidateApplications";
+
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import RecruiterDashboard from "./pages/RecruiterDashboard";
 
 export default function App() {
   return (
@@ -20,12 +26,11 @@ export default function App() {
         <Router>
           <Navbar />
           <Routes>
-            {/* Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ✅ Protected candidate dashboard with nested routes */}
+            {/* ✅ Candidate protected routes */}
             <Route
               path="/candidate"
               element={
@@ -34,12 +39,15 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
+              {/* ✅ Nested routes under /candidate */}
               <Route index element={<CandidateOverview />} />
               <Route path="resume" element={<CandidateResume />} />
               <Route path="jobs" element={<CandidateJobs />} />
+              <Route path="jobs/:id" element={<CandidateJobDetails />} />
+              <Route path="applications" element={<CandidateApplications />} />
             </Route>
 
-            {/* ✅ Protected recruiter dashboard */}
+            {/* Recruiter */}
             <Route
               path="/recruiter"
               element={
@@ -49,6 +57,7 @@ export default function App() {
               }
             />
           </Routes>
+
           <ToastContainer position="top-right" />
         </Router>
       </AuthProvider>
@@ -56,10 +65,8 @@ export default function App() {
   );
 }
 
-/* --------------------- HOMEPAGE COMPONENT --------------------- */
 function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
-
   if (!user)
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gray-50">

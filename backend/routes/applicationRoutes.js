@@ -9,41 +9,65 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
-// ➤ Apply to a job (Candidate only)
+// 🧩 Apply for a Job (Candidate Only)
 router.post("/apply/:jobId", protect, authorizeRoles("candidate"), async (req, res) => {
   try {
     const candidateId = req.user._id;
-    const { jobId } = req.params;
-    const { resumeId } = req.body;
+    const jobId = req.params.jobId;
 
-    const application = new Application({ candidateId, jobId, resumeId });
-    await application.save();
+    // ✅ Ensure job exists
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
 
-    // Enqueue background ranking task
-    await rankingQueue.add("runRanking", { jobId });
+    // ✅ Ensure candidate has a resume
+    const resume = await Resume.findOne({ userId: candidateId });
+    if (!resume) {
+      return res.status(400).json({ error: "Please upload your resume before applying." });
+    }
+
+    // ✅ Prevent duplicate applications
+    const existingApp = await Application.findOne({ jobId, candidateId });
+    if (existingApp) {
+      return res.status(400).json({ error: "You have already applied for this job." });
+    }
+
+    // ✅ Create a new application
+    const newApplication = new Application({
+      jobId,
+      candidateId,
+      status: "Applied",
+    });
+
+    await newApplication.save();
 
     res.status(201).json({
-      message: "Application submitted successfully. Ranking job queued.",
-      application,
+      message: "Application submitted successfully!",
+      application: newApplication,
     });
   } catch (err) {
-    console.error("Error applying:", err);
+    console.error("Error applying for job:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
 
-// ➤ Get all applications of a candidate
+// ✅ Get all applications of logged-in candidate
 router.get("/my-applications", protect, authorizeRoles("candidate"), async (req, res) => {
   try {
-    const apps = await Application.find({ candidateId: req.user._id })
-      .populate("jobId", "title description")
-      .populate("resumeId", "fileUrl");
-    res.json(apps);
+    const candidateId = req.user._id;
+
+    const applications = await Application.find({ candidateId })
+      .populate("jobId", "title description role type location experienceLevel recruiterId")
+      .populate("resumeId", "fileUrl")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(applications);
   } catch (err) {
+    console.error("Error fetching applications:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ➤ Recruiter: View applicants for a specific job
 router.get("/job/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {

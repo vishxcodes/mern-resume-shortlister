@@ -26,6 +26,7 @@ export default function Sidebar() {
     { name: "Dashboard", path: "/candidate", icon: <HomeIcon className="w-5 h-5" /> },
     { name: "My Resume", path: "/candidate/resume", icon: <FileTextIcon className="w-5 h-5" /> },
     { name: "Jobs", path: "/candidate/jobs", icon: <BriefcaseIcon className="w-5 h-5" /> },
+    { name: "My Applications", path: "/candidate/applications", icon: <BriefcaseIcon className="w-5 h-5" /> },
   ];
 
   return (
