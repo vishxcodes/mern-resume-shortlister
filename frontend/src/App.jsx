@@ -14,10 +14,16 @@ import CandidateJobs from "./pages/candidate/CandidateJobs";
 import CandidateJobDetails from "./pages/candidate/CandidateJobDetails";
 import CandidateApplications from "./pages/candidate/CandidateApplications";
 
+//Recruiter pages
+import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
+import CreateJobPage from "./pages/recruiter/CreateJobPage";
+import MyJobsPage from "./pages/recruiter/MyJobsPage";
+import ViewRankedResumesPage from "./pages/recruiter/ViewRankedResumesPage";
+import ProfilePage from "./pages/recruiter/ProfilePage";
+
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import RecruiterDashboard from "./pages/RecruiterDashboard";
 
 export default function App() {
   return (
