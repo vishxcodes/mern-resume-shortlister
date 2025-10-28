@@ -5,13 +5,13 @@ const RecruiterSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navItems = [
-    { label: "Dashboard", path: "/recruiter/dashboard" },
-    { label: "Post a Job", path: "/recruiter/create-job" },
-    { label: "My Jobs", path: "/recruiter/my-jobs" },
-    { label: "Ranked Resumes", path: "/recruiter/rank/overview" },
-    { label: "Profile", path: "/recruiter/profile" },
-  ];
+const navItems = [
+  { label: "Dashboard", path: "/recruiter/dashboard" },
+  { label: "Post a Job", path: "/recruiter/create-job" },
+  { label: "My Jobs", path: "/recruiter/my-jobs" },
+  { label: "Profile", path: "/recruiter/profile" },
+];
+
 
   return (
     <aside

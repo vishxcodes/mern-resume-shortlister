@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -7,9 +7,22 @@ import { MoonIcon, SunIcon } from "lucide-react";
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const { darkMode, setDarkMode } = useContext(ThemeContext);
+  const location = useLocation();
+
+  // Recruiter or Candidate dashboard route?
+  const isDashboard =
+    location.pathname.startsWith("/recruiter") ||
+    location.pathname.startsWith("/candidate");
 
   return (
-    <nav className="bg-blue-600 dark:bg-gray-900 text-white dark:text-gray-100 py-3 shadow">
+    <nav
+      className={`
+        fixed top-0 ${isDashboard ? "left-64" : "left-0"} right-0 z-50
+        bg-blue-600 dark:bg-gray-900
+        text-white dark:text-gray-100
+        py-3 shadow transition-all duration-300
+      `}
+    >
       <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
         <Link
           to="/"

@@ -5,6 +5,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Navigate } from "react-router-dom"
+
 
 // Candidate pages
 import CandidateDashboard from "./pages/CandidateDashboard";
@@ -14,13 +16,13 @@ import CandidateJobs from "./pages/candidate/CandidateJobs";
 import CandidateJobDetails from "./pages/candidate/CandidateJobDetails";
 import CandidateApplications from "./pages/candidate/CandidateApplications";
 
-//Recruiter pages
+// Recruiter pages
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
 import CreateJobPage from "./pages/recruiter/CreateJobPage";
 import MyJobsPage from "./pages/recruiter/MyJobsPage";
 import ViewRankedResumesPage from "./pages/recruiter/ViewRankedResumesPage";
 import ProfilePage from "./pages/recruiter/ProfilePage";
-
+import RecruiterLayout from "./components/recruiter/RecruiterLayout"; 
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -30,8 +32,11 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          {/* 🌍 Global Navbar (works for all roles) */}
           <Navbar />
+
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -45,7 +50,6 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              {/* ✅ Nested routes under /candidate */}
               <Route index element={<CandidateOverview />} />
               <Route path="resume" element={<CandidateResume />} />
               <Route path="jobs" element={<CandidateJobs />} />
@@ -53,16 +57,19 @@ export default function App() {
               <Route path="applications" element={<CandidateApplications />} />
             </Route>
 
-            {/* Recruiter */}
-            <Route
-              path="/recruiter"
-              element={
-                <ProtectedRoute allowedRoles={["recruiter"]}>
-                  <RecruiterDashboard />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+            import RecruiterLayoutRoute from "./routes/RecruiterLayoutRoute";
+
+
+  {/* ✅ Recruiter routes */}
+  <Route path="/recruiter" element={<RecruiterLayoutRoute />}>
+    <Route path="dashboard" element={<RecruiterDashboard />} />
+    <Route path="create-job" element={<CreateJobPage />} />
+    <Route path="my-jobs" element={<MyJobsPage />} />
+    <Route path="rank/:jobId" element={<ViewRankedResumesPage />} />
+    <Route path="profile" element={<ProfilePage />} />
+  </Route>
+</Routes>
+
 
           <ToastContainer position="top-right" />
         </Router>
@@ -73,25 +80,26 @@ export default function App() {
 
 function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
+
   if (!user)
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h1 className="text-3xl font-bold mb-4 text-blue-700">
+      <div className="h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <h1 className="text-3xl font-bold mb-4 text-blue-700 dark:text-gray-100">
           Welcome to Resume Shortlister
         </h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
           Please login or register to continue.
         </p>
         <div className="flex gap-4">
           <a
             href="/login"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
           >
             Login
           </a>
           <a
             href="/register"
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
           >
             Register
           </a>
