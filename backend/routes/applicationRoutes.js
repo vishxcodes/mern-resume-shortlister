@@ -5,7 +5,6 @@ import Job from "../models/Job.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import { rankingQueue } from "../jobs/queue.js";
 import { sendStatusEmail } from "../utils/emailService.js";
-import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -185,8 +184,56 @@ router.patch("/:applicationId/status", protect, authorizeRoles("recruiter"), asy
   }
 });
 
+// ➤ Rank applicants for a job using your TF-IDF algorithm
+router.get("/rank/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    const { jobId } = req.params;
 
+    // ✅ 1. Verify job ownership
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
 
+    if (job.recruiterId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "You are not authorized to rank this job’s applicants" });
+    }
+
+    // ✅ 2. Get all applications for this job
+    const applications = await Application.find({ jobId })
+      .populate("candidateId", "name email")
+      .populate("resumeId", "fileUrl extractedText")
+      .sort({ createdAt: -1 });
+
+    if (applications.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // ✅ 3. Prepare resume data for TF-IDF
+    const resumesData = applications.map((app) => ({
+      id: app._id,
+      text: app.resumeId?.extractedText || "",
+    }));
+
+    // ✅ 4. Run your existing TF-IDF ranking algorithm
+    const ranked = await rankResumes(job.description, resumesData);
+
+    // ✅ 5. Attach scores back to applicants
+    const rankedApplicants = applications.map((app) => {
+      const rankInfo = ranked.find((r) => r.id.toString() === app._id.toString());
+      return {
+        ...app.toObject(),
+        matchScore: rankInfo ? rankInfo.score.toFixed(3) : 0,
+      };
+    });
+
+    // ✅ 6. Sort by match score (descending)
+    rankedApplicants.sort((a, b) => b.matchScore - a.matchScore);
+
+    res.status(200).json(rankedApplicants);
+  } catch (err) {
+    console.error("❌ Error ranking applicants:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 export default router;

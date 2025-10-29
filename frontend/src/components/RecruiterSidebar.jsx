@@ -1,16 +1,20 @@
 import { useState, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { NavLink } from "react-router-dom";
 import {
+  LayoutDashboardIcon,
   BriefcaseIcon,
-  FilePlusIcon,
   UsersIcon,
-  LogOutIcon,
+  FileTextIcon,
+  FilePlusIcon,
   MenuIcon,
   XIcon,
   UserIcon,
-  LayoutDashboardIcon,
+  SettingsIcon,
+  LogOutIcon,
 } from "lucide-react";
+
 
 export default function RecruiterSidebar() {
   const { user, logout } = useContext(AuthContext);
@@ -29,6 +33,7 @@ export default function RecruiterSidebar() {
     { name: "Post Job", path: "/recruiter/post-job", icon: <FilePlusIcon className="w-5 h-5" /> },
     { name: "Applicants", path: "/recruiter/applicants", icon: <UsersIcon className="w-5 h-5" /> },
     { name: "Profile", path: "/recruiter/profile", icon: <UserIcon className="w-5 h-5" /> },
+    { name: "Rank Applicants", path: "/recruiter/rank-applicants", icon: <FileTextIcon className="w-5 h-5" /> },
   ];
 
   return (

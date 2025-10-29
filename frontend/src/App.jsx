@@ -21,6 +21,8 @@ import RecruiterJobs from "./pages/recruiter/RecruiterJobs";
 import RecruiterPostJob from "./pages/recruiter/RecruiterPostJob";
 import RecruiterApplicants from "./pages/recruiter/RecruiterApplicants";
 import RecruiterProfile from "./pages/recruiter/RecruiterProfile";
+import RecruiterRankJobs from "./pages/recruiter/RecruiterRankJobs";
+import RecruiterRankApplicants from "./pages/recruiter/RecruiterRankApplicants";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -68,6 +70,9 @@ export default function App() {
               <Route path="jobs" element={<RecruiterJobs />} />
               <Route path="post-job" element={<RecruiterPostJob />} />
               <Route path="applicants" element={<RecruiterApplicants />} />
+              <Route path="rank-applicants" element={<RecruiterRankJobs />} />
+              <Route path="rank-applicants/:jobId" element={<RecruiterRankApplicants />} />
+
               <Route path="profile" element={<RecruiterProfile />} />
             </Route>
 
