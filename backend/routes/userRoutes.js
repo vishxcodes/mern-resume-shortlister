@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -47,6 +48,37 @@ router.post("/login", async (req, res) => {
 
     res.json({ token, user });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Get current user profile
+router.get("/me", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Update current user profile
+router.put("/me", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.company = req.body.company || user.company;
+    user.bio = req.body.bio || user.bio;
+
+    const updatedUser = await user.save();
+    res.json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error("Error updating profile:", err);
     res.status(500).json({ error: err.message });
   }
 });

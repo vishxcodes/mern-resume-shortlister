@@ -1,14 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Navigate } from "react-router-dom"
 
-
-// Candidate pages
+// 🧑‍🎓 Candidate pages
 import CandidateDashboard from "./pages/CandidateDashboard";
 import CandidateOverview from "./pages/candidate/CandidateOverview";
 import CandidateResume from "./pages/candidate/CandidateResume";
@@ -16,13 +14,13 @@ import CandidateJobs from "./pages/candidate/CandidateJobs";
 import CandidateJobDetails from "./pages/candidate/CandidateJobDetails";
 import CandidateApplications from "./pages/candidate/CandidateApplications";
 
-// Recruiter pages
+// 🧑‍💼 Recruiter pages
 import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
-import CreateJobPage from "./pages/recruiter/CreateJobPage";
-import MyJobsPage from "./pages/recruiter/MyJobsPage";
-import ViewRankedResumesPage from "./pages/recruiter/ViewRankedResumesPage";
-import ProfilePage from "./pages/recruiter/ProfilePage";
-import RecruiterLayout from "./components/recruiter/RecruiterLayout"; 
+import RecruiterOverview from "./pages/recruiter/RecruiterOverview";
+import RecruiterJobs from "./pages/recruiter/RecruiterJobs";
+import RecruiterPostJob from "./pages/recruiter/RecruiterPostJob";
+import RecruiterApplicants from "./pages/recruiter/RecruiterApplicants";
+import RecruiterProfile from "./pages/recruiter/RecruiterProfile";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -32,16 +30,16 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          {/* 🌍 Global Navbar (works for all roles) */}
+          {/* 🌍 Global Navbar (visible to all users) */}
           <Navbar />
 
           <Routes>
-            {/* Public routes */}
+            {/* 🌐 Public routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ✅ Candidate protected routes */}
+            {/* 🎓 Candidate protected routes */}
             <Route
               path="/candidate"
               element={
@@ -57,20 +55,27 @@ export default function App() {
               <Route path="applications" element={<CandidateApplications />} />
             </Route>
 
-            import RecruiterLayoutRoute from "./routes/RecruiterLayoutRoute";
+            {/* 💼 Recruiter protected routes */}
+            <Route
+              path="/recruiter"
+              element={
+                <ProtectedRoute allowedRoles={["recruiter"]}>
+                  <RecruiterDashboard />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<RecruiterOverview />} />
+              <Route path="jobs" element={<RecruiterJobs />} />
+              <Route path="post-job" element={<RecruiterPostJob />} />
+              <Route path="applicants" element={<RecruiterApplicants />} />
+              <Route path="profile" element={<RecruiterProfile />} />
+            </Route>
 
+            {/* 🚧 Catch-all route → redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-  {/* ✅ Recruiter routes */}
-  <Route path="/recruiter" element={<RecruiterLayoutRoute />}>
-    <Route path="dashboard" element={<RecruiterDashboard />} />
-    <Route path="create-job" element={<CreateJobPage />} />
-    <Route path="my-jobs" element={<MyJobsPage />} />
-    <Route path="rank/:jobId" element={<ViewRankedResumesPage />} />
-    <Route path="profile" element={<ProfilePage />} />
-  </Route>
-</Routes>
-
-
+          {/* 🔔 Global toast notifications */}
           <ToastContainer position="top-right" />
         </Router>
       </AuthProvider>
@@ -83,7 +88,7 @@ function HomePage() {
 
   if (!user)
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
         <h1 className="text-3xl font-bold mb-4 text-blue-700 dark:text-gray-100">
           Welcome to Resume Shortlister
         </h1>
@@ -107,10 +112,12 @@ function HomePage() {
       </div>
     );
 
-  // redirect logged-in user to appropriate dashboard
-  return user.role === "recruiter" ? (
-    <RecruiterDashboard />
-  ) : (
-    <CandidateDashboard />
-  );
+  // 🔁 Redirect logged-in users based on role
+  if (user.role === "candidate") {
+    return <CandidateDashboard />;
+  } else if (user.role === "recruiter") {
+    return <RecruiterDashboard />;
+  } else {
+    return <Navigate to="/login" replace />;
+  }
 }

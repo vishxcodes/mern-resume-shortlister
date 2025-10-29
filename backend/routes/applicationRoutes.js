@@ -35,7 +35,7 @@ router.post("/apply/:jobId", protect, authorizeRoles("candidate"), async (req, r
     const newApplication = new Application({
       jobId,
       candidateId,
-      status: "Applied",
+      status: "applied",
     });
 
     await newApplication.save();
@@ -81,14 +81,45 @@ router.get("/job/:jobId", protect, authorizeRoles("recruiter"), async (req, res)
   }
 });
 
+// ➤ Get all applicants for jobs posted by the recruiter
+router.get("/recruiter", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    // Find all jobs owned by this recruiter
+    const recruiterJobs = await Job.find({ recruiterId: req.user._id }).select("_id title");
+
+    if (recruiterJobs.length === 0)
+      return res.status(200).json([]); // No jobs posted by this recruiter
+
+    const jobIds = recruiterJobs.map((job) => job._id);
+
+    // Find all applications linked to the recruiter’s jobs
+    const applications = await Application.find({ jobId: { $in: jobIds } })
+      .populate("jobId", "title")
+      .populate("candidateId", "name email")
+      .populate("resumeId", "fileUrl")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(applications);
+  } catch (err) {
+    console.error("Error fetching recruiter applicants:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // ➤ Update application status (Recruiter only)
 router.patch("/:applicationId/status", protect, authorizeRoles("recruiter"), async (req, res) => {
   try {
     const { applicationId } = req.params;
     const { status } = req.body;
 
+    console.log("🔹 PATCH request received for Application:", applicationId);
+    console.log("🔹 New Status:", status);
+    console.log("🔹 Recruiter:", req.user?._id);
+
     const validStatuses = ["applied", "shortlisted", "rejected", "accepted"];
     if (!validStatuses.includes(status)) {
+      console.log("❌ Invalid status:", status);
       return res.status(400).json({ error: "Invalid status value" });
     }
 
@@ -96,35 +127,65 @@ router.patch("/:applicationId/status", protect, authorizeRoles("recruiter"), asy
       .populate("jobId", "recruiterId title")
       .populate("candidateId", "email name");
 
-    if (!application) return res.status(404).json({ error: "Application not found" });
+    if (!application) {
+      console.log("❌ Application not found");
+      return res.status(404).json({ error: "Application not found" });
+    }
 
-    // Only recruiter who owns the job can update it
     if (application.jobId.recruiterId.toString() !== req.user._id.toString()) {
+      console.log("❌ Unauthorized recruiter");
       return res.status(403).json({ error: "Unauthorized" });
     }
 
+    // ✅ Update status
     application.status = status;
     await application.save();
+    console.log("✅ Status updated successfully");
 
-    // ✅ Send email only on recruiter decision (accepted/rejected)
-    if (["accepted", "rejected"].includes(status)) {
-      const subject =
-        status === "accepted"
-          ? `Congratulations! You've been accepted for ${application.jobId.title}`
-          : `Update on your application for ${application.jobId.title}`;
-      const message =
-        status === "accepted"
-          ? `Hi ${application.candidateId.name},\n\nYour application for "${application.jobId.title}" has been accepted by the recruiter. Congratulations!`
-          : `Hi ${application.candidateId.name},\n\nUnfortunately, your application for "${application.jobId.title}" was not selected at this stage.\n\nWe wish you the best in your career journey.`;
-      await sendStatusEmail(application.candidateId.email, subject, message);
+    // ✅ Email Notifications for shortlisted, accepted, rejected
+    const candidateEmail = application.candidateId.email;
+    const candidateName = application.candidateId.name;
+    const jobTitle = application.jobId.title;
+
+    if (["shortlisted", "accepted", "rejected"].includes(status)) {
+      let subject, message;
+
+      switch (status) {
+        case "shortlisted":
+          subject = `🎉 You've been shortlisted for ${jobTitle}`;
+          message = `Hi ${candidateName},\n\nGood news! You've been *shortlisted* for the "${jobTitle}" position.\n\nOur team was impressed by your profile, and you may be contacted soon for the next steps.\n\nBest of luck!\n\n– Resume Shortlister Team`;
+          break;
+
+        case "accepted":
+          subject = `✅ Congratulations! You’ve been accepted for ${jobTitle}`;
+          message = `Hi ${candidateName},\n\nWe’re excited to inform you that your application for "${jobTitle}" has been *accepted* by the recruiter!\n\nCongratulations and best wishes for your new role 🎉\n\n– Resume Shortlister Team`;
+          break;
+
+        case "rejected":
+          subject = `📢 Update on your application for ${jobTitle}`;
+          message = `Hi ${candidateName},\n\nWe wanted to let you know that your application for "${jobTitle}" was not selected at this stage.\n\nPlease don’t be discouraged — many factors are considered in selection, and we encourage you to apply again in the future.\n\nBest wishes,\nResume Shortlister Team`;
+          break;
+
+        default:
+          break;
+      }
+
+      try {
+        await sendStatusEmail(candidateEmail, subject, message);
+        console.log(`📧 ${status.toUpperCase()} email sent successfully to ${candidateEmail}`);
+      } catch (mailErr) {
+        console.error("❌ Failed to send status email:", mailErr.message);
+      }
     }
 
     res.json({ message: "Application status updated", application });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error updating application status:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 
