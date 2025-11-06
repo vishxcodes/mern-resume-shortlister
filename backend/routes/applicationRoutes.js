@@ -5,6 +5,7 @@ import Job from "../models/Job.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import { rankingQueue } from "../jobs/queue.js";
 import { sendStatusEmail } from "../utils/emailService.js";
+import { rankResumes } from "../utils/tfidf.js";
 
 const router = express.Router();
 

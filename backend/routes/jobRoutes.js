@@ -1,11 +1,14 @@
+// routes/jobRoutes.js
 import express from "express";
 import Job from "../models/Job.js";
 import Resume from "../models/Resume.js";
+import Application from "../models/application.js"; // make sure this exists in your models folder
 import { rankResumes } from "../utils/tfidf.js";
-import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
+import { protect, authorizeRoles } from "../middleware/authMiddleware.js"; // adapt path if needed
 
 const router = express.Router();
 
+// ➤ Create a new Job (recruiter)
 router.post("/", protect, authorizeRoles("recruiter"), async (req, res) => {
   try {
     const { title, description, role, type, location, experienceLevel } = req.body;
@@ -50,7 +53,6 @@ router.get("/recommended", protect, authorizeRoles("candidate"), async (req, res
     if (!resume || !resume.extractedText) {
       return res.status(404).json({ error: "Upload a resume to get recommendations." });
     }
-console.log("Found resume:", resume ? "Yes" : "No");
 
     const allJobs = await Job.find();
     // Simple text-based similarity (basic version)
@@ -75,6 +77,94 @@ console.log("Found resume:", resume ? "Yes" : "No");
   }
 });
 
+// ➤ Rank resumes for a job (Recruiter Only)
+router.get("/rank/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    // Ensure recruiter owns the job
+    if (job.recruiterId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "You are not authorized to view this job’s resumes" });
+    }
+
+    const resumes = await Resume.find({}).select("extractedText userId");
+    const resumesData = resumes.map((r) => ({ id: r._id, text: r.extractedText }));
+
+    const ranked = await rankResumes(job.description, resumesData);
+    res.json({ jobId: job._id, rankedResumes: ranked });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE single job (recruiter only)
+router.delete("/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    // Ownership check
+    if (job.recruiterId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Delete related applications (if Application model exists)
+    try {
+      await Application.deleteMany({ jobId: job._id });
+    } catch (appErr) {
+      console.warn("Application model delete failed or Application model missing:", appErr.message);
+      // continue — don't block job deletion if application deletion fails
+    }
+
+    // Delete the job
+    await job.deleteOne();
+
+    res.json({ message: "Job and related applications deleted", jobId: job._id });
+  } catch (err) {
+    console.error("Error deleting job:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk delete jobs (recruiter only)
+router.post("/bulk-delete", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "No job ids provided" });
+    }
+
+    // Verify ownership: fetch jobs and ensure all belong to recruiter
+    const jobs = await Job.find({ _id: { $in: ids } });
+
+    // check all exists and owned
+    for (const job of jobs) {
+      if (job.recruiterId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Unauthorized to delete one or more jobs" });
+      }
+    }
+
+    // Delete related applications for those jobs
+    try {
+      await Application.deleteMany({ jobId: { $in: ids } });
+    } catch (appErr) {
+      console.warn("Application model bulk delete failed or Application model missing:", appErr.message);
+    }
+
+    // Delete the jobs themselves
+    await Job.deleteMany({ _id: { $in: ids } });
+
+    res.json({ message: "Selected jobs deleted" });
+  } catch (err) {
+    console.error("Error bulk deleting jobs:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Get all jobs (with filters/search)
 router.get("/", async (req, res) => {
   try {
     const { search, role, type, location, experienceLevel } = req.query;
@@ -119,28 +209,6 @@ router.get("/:id", async (req, res) => {
     if (!job) return res.status(404).json({ error: "Job not found" });
     res.json(job);
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ➤ Rank resumes for a job (Recruiter Only)
-router.get("/rank/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
-  try {
-    const job = await Job.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ error: "Job not found" });
-
-    // Ensure recruiter owns the job
-    if (job.recruiterId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: "You are not authorized to view this job’s resumes" });
-    }
-
-    const resumes = await Resume.find({}).select("extractedText userId");
-    const resumesData = resumes.map((r) => ({ id: r._id, text: r.extractedText }));
-
-    const ranked = await rankResumes(job.description, resumesData);
-    res.json({ jobId: job._id, rankedResumes: ranked });
-  } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
