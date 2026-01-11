@@ -15,7 +15,7 @@ const applicationSchema = new mongoose.Schema(
     resumeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Resume",
-      required: false, // ✅ Make this optional
+      // required: false, // ✅ Make this optional
     },
     status: {
       type: String,

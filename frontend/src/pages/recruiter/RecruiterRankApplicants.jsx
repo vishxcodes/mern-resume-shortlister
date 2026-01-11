@@ -1,168 +1,139 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import API from "../../api/axiosInstance";
-import { toast } from "react-toastify";
-import { MailIcon, FileTextIcon } from "lucide-react";
+// RecruiterRankApplicants.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-function RecruiterRankApplicants() {
-  const { jobId } = useParams();
-  const [applicants, setApplicants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState(null);
+export default function RecruiterRankApplicants({ jobId }) {
+  const [applicants, setApplicants] = useState([]); // ALWAYS an array
+  const [skipped, setSkipped] = useState([]); // application IDs skipped by backend
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  // ✅ Fetch ranked applicants
   useEffect(() => {
-    const fetchApplicants = async () => {
-      try {
-        const { data } = await API.get(`/applications/rank/${jobId}`);
-        setApplicants(data);
-      } catch (err) {
-        console.error("Error fetching applicants:", err);
-        toast.error("Failed to load applicants");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchApplicants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
-  // ✅ Handle status update
-  const handleStatusChange = async (appId, newStatus) => {
-    setUpdatingId(appId);
+  const fetchApplicants = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    setMessage(null);
     try {
-      await API.patch(`/applications/${appId}/status`, { status: newStatus });
-      toast.success("Status updated successfully!");
-      setApplicants((prev) =>
-        prev.map((a) =>
-          a._id === appId ? { ...a, status: newStatus } : a
-        )
-      );
+      const token = localStorage.getItem("token"); // adjust if you store token elsewhere
+      const res = await axios.get(`/api/applications/rank/${jobId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      console.log("Rank API response (success):", res.data);
+
+      // Resilience: backend may return different shapes. Normalize to { applicants: [], skipped: [], message }
+      const data = res.data;
+
+      // If the backend returns an array directly (old behavior), treat that as applicants array:
+      if (Array.isArray(data)) {
+        setApplicants(data);
+        setSkipped([]);
+        setMessage(null);
+      } else {
+        // If backend returned object, try to pull applicants/skipped/message fields safely
+        const safeApplicants = Array.isArray(data.applicants)
+          ? data.applicants
+          : Array.isArray(data) // fallback if server returned array at top-level
+          ? data
+          : [];
+
+        setApplicants(safeApplicants);
+        setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
+        setMessage(data.message || data.error || null);
+      }
     } catch (err) {
-      console.error("Error updating status:", err);
-      toast.error("Failed to update status");
+      console.error("Error fetching applicants:", err);
+
+      // If server returned an error response (400/500) with useful body, use that
+      if (err.response && err.response.data) {
+        console.log("Server error body:", err.response.data);
+        const data = err.response.data;
+
+        // If data contains applicants array despite being error, use it
+        if (Array.isArray(data.applicants)) {
+          setApplicants(data.applicants);
+          setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
+          setMessage(data.message || null);
+        } else {
+          // Otherwise, make sure applicants stays an array and surface message
+          setApplicants([]);
+          setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
+          setMessage(data.message || data.error || "Failed to fetch ranked applicants");
+        }
+      } else {
+        // Network error or no response
+        setApplicants([]);
+        setSkipped([]);
+        setMessage("Network error — could not reach server");
+      }
+      setErrorMsg("Failed to fetch applicants. See console for details.");
     } finally {
-      setUpdatingId(null);
+      setLoading(false);
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center mt-10">
-        <span className="text-blue-500 font-medium">Loading applicants...</span>
-      </div>
-    );
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400 mb-4">
-        Ranked Applicants
-      </h1>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-3">Ranked Applicants</h2>
 
-      {applicants.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">
-          No applicants found for this job.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {applicants.map((app, index) => {
-            // Parse match score safely
-            const score = parseFloat(app.matchScore) || 0;
-            const percentage = Math.min(score * 100, 100);
+      {loading && <div>Loading applicants...</div>}
 
-            // Determine color based on match score
-            const getColor = () => {
-              if (score >= 0.7) return "bg-green-500";
-              if (score >= 0.4) return "bg-yellow-500";
-              return "bg-red-500";
-            };
+      {errorMsg && <div className="text-red-600 mb-2">{errorMsg}</div>}
 
-            return (
-              <div
-                key={app._id}
-                className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 transition-colors duration-300"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      #{index + 1} •{" "}
-                      {app.candidateId?.name || "Unknown Candidate"}
-                    </h3>
-                  </div>
-
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Match Score:{" "}
-                    <span
-                      className={`${
-                        score >= 0.7
-                          ? "text-green-600 dark:text-green-400"
-                          : score >= 0.4
-                          ? "text-yellow-500 dark:text-yellow-400"
-                          : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {app.matchScore}
-                    </span>
-                  </span>
-                </div>
-
-                {/* Visual Match Bar */}
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4 overflow-hidden">
-                  <div
-                    className={`${getColor()} h-3 transition-all duration-500 ease-in-out`}
-                    style={{ width: `${percentage}%` }}
-                  ></div>
-                </div>
-
-                {/* Email */}
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 flex items-center gap-2">
-                  <MailIcon className="w-4 h-4" />{" "}
-                  {app.candidateId?.email || "N/A"}
-                </p>
-
-                {/* Resume link */}
-                {app.resumeId?.fileUrl && (
-                  <a
-                    href={`http://localhost:8000/${app.resumeId.fileUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 flex items-center gap-2 text-sm hover:underline mb-3"
-                  >
-                    <FileTextIcon className="w-4 h-4" /> View Resume
-                  </a>
-                )}
-
-                {/* Status Control */}
-                <div className="flex items-center justify-between mt-4">
-                  <span className="capitalize text-gray-700 dark:text-gray-300">
-                    Current Status:{" "}
-                    <span className="font-medium text-blue-600 dark:text-blue-400">
-                      {app.status}
-                    </span>
-                  </span>
-
-                  <select
-                    disabled={updatingId === app._id}
-                    value={app.status}
-                    onChange={(e) =>
-                      handleStatusChange(app._id, e.target.value)
-                    }
-                    className="p-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="applied">Applied</option>
-                    <option value="shortlisted">Shortlisted</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="accepted">Accepted</option>
-                  </select>
-                </div>
-              </div>
-            );
-          })}
+      {message && (
+        <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+          {message}
         </div>
+      )}
+
+      {skipped && skipped.length > 0 && (
+        <div className="mb-3 p-2 bg-gray-50 border rounded">
+          <strong>Skipped applications (missing/empty resumes):</strong>{" "}
+          {skipped.slice(0, 10).join(", ")}
+          {skipped.length > 10 ? ` ... (+${skipped.length - 10} more)` : ""}
+        </div>
+      )}
+
+      {/* Safe mapping: applicants is guaranteed to be an array */}
+      {applicants.length === 0 && !loading ? (
+        <div>No applicants to display.</div>
+      ) : (
+        <table className="min-w-full text-left">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Email</th>
+              <th>Match Score</th>
+              <th>Applied At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {applicants.map((app) => {
+              // app shape may vary; be defensive
+              const candidate = app.candidateId || app.candidate || {};
+              const name = candidate.name || (candidate.fullName ? candidate.fullName : "Unknown");
+              const email = candidate.email || "—";
+              const scoreDisplay =
+                app.matchScoreDisplay ?? (typeof app.matchScore === "number" ? app.matchScore.toFixed(3) : "0.000");
+              const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleString() : "—";
+
+              return (
+                <tr key={app._id || app.id || Math.random()}>
+                  <td>{name}</td>
+                  <td>{email}</td>
+                  <td>{scoreDisplay}</td>
+                  <td>{createdAt}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   );
 }
-
-export default RecruiterRankApplicants;

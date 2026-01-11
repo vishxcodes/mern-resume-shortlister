@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "dependencies": {
     "mammoth": "^1.11.0",
     "pdf-parse": "^1.1.1"

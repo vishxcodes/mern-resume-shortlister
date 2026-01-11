@@ -9,32 +9,33 @@ import { rankResumes } from "../utils/tfidf.js";
 
 const router = express.Router();
 
-// 🧩 Apply for a Job (Candidate Only)
+// 🧩 Apply for a Job (Candidate Only) — updated to store resumeId
 router.post("/apply/:jobId", protect, authorizeRoles("candidate"), async (req, res) => {
   try {
     const candidateId = req.user._id;
     const jobId = req.params.jobId;
 
-    // ✅ Ensure job exists
+    // Ensure job exists
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ error: "Job not found" });
 
-    // ✅ Ensure candidate has a resume
+    // Ensure candidate has a resume
     const resume = await Resume.findOne({ userId: candidateId });
     if (!resume) {
       return res.status(400).json({ error: "Please upload your resume before applying." });
     }
 
-    // ✅ Prevent duplicate applications
+    // Prevent duplicate applications
     const existingApp = await Application.findOne({ jobId, candidateId });
     if (existingApp) {
       return res.status(400).json({ error: "You have already applied for this job." });
     }
 
-    // ✅ Create a new application
+    // Create a new application and include resumeId
     const newApplication = new Application({
       jobId,
       candidateId,
+      resumeId: resume._id,    // <-- store the resume reference here
       status: "applied",
     });
 
@@ -49,8 +50,6 @@ router.post("/apply/:jobId", protect, authorizeRoles("candidate"), async (req, r
     res.status(500).json({ error: err.message });
   }
 });
-
-
 // ✅ Get all applications of logged-in candidate
 router.get("/my-applications", protect, authorizeRoles("candidate"), async (req, res) => {
   try {
@@ -67,7 +66,6 @@ router.get("/my-applications", protect, authorizeRoles("candidate"), async (req,
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ➤ Recruiter: View applicants for a specific job
 router.get("/job/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
@@ -105,7 +103,6 @@ router.get("/recruiter", protect, authorizeRoles("recruiter"), async (req, res) 
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ➤ Update application status (Recruiter only)
 router.patch("/:applicationId/status", protect, authorizeRoles("recruiter"), async (req, res) => {
@@ -204,37 +201,90 @@ router.get("/rank/:jobId", protect, authorizeRoles("recruiter"), async (req, res
       .populate("resumeId", "fileUrl extractedText")
       .sort({ createdAt: -1 });
 
-    if (applications.length === 0) {
+    if (!applications || applications.length === 0) {
       return res.status(200).json([]);
     }
 
     // ✅ 3. Prepare resume data for TF-IDF
-    const resumesData = applications.map((app) => ({
-      id: app._id,
-      text: app.resumeId?.extractedText || "",
-    }));
+    // Use the resume document's id (not the application id) so we can correctly match scores later.
+    const resumesData = [];
+    const skipped = []; // application IDs where resume text was empty or missing
 
-    // ✅ 4. Run your existing TF-IDF ranking algorithm
-    const ranked = await rankResumes(job.description, resumesData);
+    for (const app of applications) {
+      const resumeDoc = app.resumeId;
+      const resumeId = resumeDoc?._id ? resumeDoc._id.toString() : null;
+      const text = resumeDoc?.extractedText ? String(resumeDoc.extractedText).trim() : "";
 
-    // ✅ 5. Attach scores back to applicants
-    const rankedApplicants = applications.map((app) => {
-      const rankInfo = ranked.find((r) => r.id.toString() === app._id.toString());
+      if (!resumeId || text.length === 0) {
+        skipped.push(String(app._id));
+        continue;
+      }
+
+      resumesData.push({ id: resumeId, text });
+    }
+
+    if (resumesData.length === 0) {
+      // Nothing to rank (either no resumes or all had empty extractedText)
+      return res.status(400).json({
+        error: "No resume text available to rank. Ensure applicants uploaded readable resumes.",
+        skipped,
+      });
+    }
+
+    // ✅ 4. Run your TF-IDF ranking algorithm
+    let rankedRaw;
+    try {
+      rankedRaw = await rankResumes(job.description, resumesData);
+    } catch (err) {
+      console.error("Error running rankResumes:", err);
+      return res.status(500).json({ error: "TF-IDF ranking failed", details: err.message });
+    }
+
+    // Normalize rankedRaw into an array `ranked`
+    let ranked;
+    if (Array.isArray(rankedRaw)) {
+      ranked = rankedRaw;
+    } else if (rankedRaw && Array.isArray(rankedRaw.results)) {
+      console.warn("TF-IDF warning:", rankedRaw.warning || "(no message)");
+      ranked = rankedRaw.results;
+    } else {
+      console.error("Unexpected TF-IDF output shape:", rankedRaw);
+      return res.status(500).json({ error: "Unexpected TF-IDF output" });
+    }
+
+    // Build a map from resumeId -> numeric score for O(1) lookups
+    const scoreMap = new Map();
+    for (const r of ranked) {
+      const rid = r.id ? String(r.id) : null;
+      const score = typeof r.score === "string" ? parseFloat(r.score) : Number(r.score || 0);
+      scoreMap.set(rid, isNaN(score) ? 0 : score);
+    }
+
+    // ✅ 5. Attach scores back to applicants (match by resumeId)
+    const applicantsWithScore = applications.map((app) => {
+      const resumeId = app.resumeId?._id ? String(app.resumeId._id) : null;
+      const scoreNum = resumeId ? (scoreMap.has(resumeId) ? scoreMap.get(resumeId) : 0) : 0;
+      // Keep numeric score for sorting; also provide a rounded string for display.
       return {
         ...app.toObject(),
-        matchScore: rankInfo ? rankInfo.score.toFixed(3) : 0,
+        matchScore: scoreNum,
+        matchScoreDisplay: Number(scoreNum).toFixed(3),
       };
     });
 
     // ✅ 6. Sort by match score (descending)
-    rankedApplicants.sort((a, b) => b.matchScore - a.matchScore);
+    applicantsWithScore.sort((a, b) => b.matchScore - a.matchScore);
 
-    res.status(200).json(rankedApplicants);
+    // Return results and skipped list so frontend can show which apps lacked text
+    res.status(200).json({
+      jobId: job._id,
+      applicants: applicantsWithScore,
+      skipped,
+    });
   } catch (err) {
     console.error("❌ Error ranking applicants:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;
