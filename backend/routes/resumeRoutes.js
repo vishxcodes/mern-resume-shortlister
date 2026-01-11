@@ -1,7 +1,6 @@
 import express from "express";
 import Resume from "../models/Resume.js";
 import upload from "../middleware/uploadMiddleware.js";
-// import { extractTextFromFile } from "../utils/extractText.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -18,11 +17,16 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-       // 🔥 Dynamic import INSIDE the handler (Vercel-safe)
-      const { extractTextFromFile } = await import(
-        "../utils/extractText.js"
+      /**
+       * 🔥 IMPORTANT:
+       * Fully dynamic runtime-only import
+       * Prevents Vercel from bundling pdf-parse / mammoth at build time
+       */
+      const extractorModule = await import(
+        new URL("../utils/extractText.js", import.meta.url)
       );
-      // ⬅️ IMPORTANT: pass the file object, not path
+      const extractTextFromFile = extractorModule.extractTextFromFile;
+
       const extractedText = await extractTextFromFile(req.file);
 
       const newResume = new Resume({
@@ -51,9 +55,9 @@ router.get(
   async (req, res) => {
     try {
       const resume = await Resume.findOne({ userId: req.user._id });
-      if (!resume)
+      if (!resume) {
         return res.status(404).json({ message: "No resume found" });
-
+      }
       res.json({ resume });
     } catch (err) {
       res.status(500).json({ error: err.message });
