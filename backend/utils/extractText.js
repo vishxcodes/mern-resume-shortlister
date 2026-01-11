@@ -1,32 +1,35 @@
-import fs from "fs";
-import path from "path";
 import mammoth from "mammoth";
-import { createRequire } from "module";
+import pdfParse from "pdf-parse";
 
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
-
-export const extractTextFromFile = async (filePath) => {
-  const ext = path.extname(filePath).toLowerCase();
-
-  if (ext === ".pdf") {
-    try {
-      const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
-      return data.text.trim();
-    } catch (err) {
-      console.error(`PDF parsing failed for ${filePath}:`, err.message);
-      return ""; // fallback to empty string if PDF is unreadable
-    }
-  } else if (ext === ".docx" || ext === ".doc") {
-    try {
-      const result = await mammoth.extractRawText({ path: filePath });
-      return result.value.trim();
-    } catch (err) {
-      console.error(`DOCX parsing failed for ${filePath}:`, err.message);
-      return "";
-    }
-  } else {
-    throw new Error("Unsupported file type");
+export const extractTextFromFile = async (file) => {
+  if (!file || !file.buffer) {
+    throw new Error("Invalid file data");
   }
+
+  // PDF
+  if (file.mimetype === "application/pdf") {
+    const data = await pdfParse(file.buffer);
+    return data.text.trim();
+  }
+
+  // DOCX
+  if (
+    file.mimetype ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
+    const result = await mammoth.extractRawText({
+      buffer: file.buffer,
+    });
+    return result.value.trim();
+  }
+
+  // DOC (older format)
+  if (file.mimetype === "application/msword") {
+    const result = await mammoth.extractRawText({
+      buffer: file.buffer,
+    });
+    return result.value.trim();
+  }
+
+  throw new Error("Unsupported file type");
 };
