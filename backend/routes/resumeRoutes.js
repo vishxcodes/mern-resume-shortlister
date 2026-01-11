@@ -1,7 +1,7 @@
 import express from "express";
 import Resume from "../models/Resume.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { extractTextFromFile } from "../utils/extractText.js";
+// import { extractTextFromFile } from "../utils/extractText.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -18,6 +18,10 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+       // 🔥 Dynamic import INSIDE the handler (Vercel-safe)
+      const { extractTextFromFile } = await import(
+        "../utils/extractText.js"
+      );
       // ⬅️ IMPORTANT: pass the file object, not path
       const extractedText = await extractTextFromFile(req.file);
 
