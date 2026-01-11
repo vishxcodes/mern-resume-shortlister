@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 app.use("/api/users", userRoutes);
-app.use("/api/resumes", resumeRoutes);
+// app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 
