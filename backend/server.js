@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/UserRoutes.js";
-import resumeRoutes from "./routes/resumeRoutes.js";
+// import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 
@@ -43,7 +43,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 app.use("/api/users", userRoutes);
-// app.use("/api/resumes", resumeRoutes);
+// app.use("/api/resumes", resumeRoutes); FOR VERCEL
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 
