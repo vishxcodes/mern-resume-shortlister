@@ -1,30 +1,21 @@
-import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
-
 export const extractTextFromFile = async (file) => {
   if (!file || !file.buffer) {
     throw new Error("Invalid file data");
   }
 
-  // PDF
+  // Dynamically import ONLY when needed (Vercel-safe)
   if (file.mimetype === "application/pdf") {
+    const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(file.buffer);
     return data.text.trim();
   }
 
-  // DOCX
   if (
     file.mimetype ===
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    file.mimetype === "application/msword"
   ) {
-    const result = await mammoth.extractRawText({
-      buffer: file.buffer,
-    });
-    return result.value.trim();
-  }
-
-  // DOC (older format)
-  if (file.mimetype === "application/msword") {
+    const mammoth = (await import("mammoth")).default;
     const result = await mammoth.extractRawText({
       buffer: file.buffer,
     });
