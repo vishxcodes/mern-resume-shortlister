@@ -1,6 +1,7 @@
 import express from "express";
 import Resume from "../models/Resume.js";
 import upload from "../middleware/uploadMiddleware.js";
+import { extractTextFromFile } from "../utils/extractText.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -17,20 +18,12 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      /**
-       * 🔥 IMPORTANT:
-       * Fully dynamic runtime-only import
-       * Prevents Vercel from bundling pdf-parse / mammoth at build time
-       */
-      const extractorModule = await import(
-        new URL("../utils/extractText.js", import.meta.url)
-      );
-      const extractTextFromFile = extractorModule.extractTextFromFile;
-
-      const extractedText = await extractTextFromFile(req.file);
+      const filePath = req.file.path;
+      const extractedText = await extractTextFromFile(filePath);
 
       const newResume = new Resume({
         userId: req.user._id,
+        fileUrl: filePath,
         extractedText: extractedText || "",
       });
 
