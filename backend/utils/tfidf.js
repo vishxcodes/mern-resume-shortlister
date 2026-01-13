@@ -19,13 +19,22 @@ export const rankResumes = (jobDescription, resumes) => {
 
     PythonShell.run(scriptPath, options)
       .then(results => {
-        console.log("✅ Python finished, raw results:", results);
-        if (!results || results.length === 0) throw new Error("Empty Python output");
-        resolve(JSON.parse(results[0]));
-      })
-      .catch(err => {
-        console.error("❌ Python failed:", err);
-        reject(err);
-      });
-  });
+  console.log("✅ Python finished, raw results:", results);
+  if (!results || results.length === 0) {
+    throw new Error("Empty Python output");
+  }
+
+  const parsed = JSON.parse(results[0]);
+
+  // Normalize output so caller ALWAYS gets an array
+  if (Array.isArray(parsed)) {
+    resolve(parsed);
+  } else if (parsed && Array.isArray(parsed.results)) {
+    console.warn("⚠️ TF-IDF warning:", parsed.warning);
+    resolve(parsed.results);
+  } else {
+    throw new Error("Unexpected TF-IDF output shape");
+  }
+})
+});
 };

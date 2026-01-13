@@ -1,7 +1,8 @@
 import express from "express";
-import Resume from "../models/Resume.js";
 import upload from "../middleware/uploadMiddleware.js";
-import { extractTextFromFile } from "../utils/extractText.js";
+import Resume from "../models/Resume.js";
+import cloudinary from "../config/cloudinary.js";
+import pdfParse from "pdf-parse";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -18,23 +19,39 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const filePath = req.file.path;
-      const extractedText = await extractTextFromFile(filePath);
+      // 1️⃣ Extract text from PDF buffer
+      const pdfData = await pdfParse(req.file.buffer);
+      const extractedText = pdfData.text.trim();
 
-      const newResume = new Resume({
-        userId: req.user._id,
-        fileUrl: filePath,
-        extractedText: extractedText || "",
+
+      console.log("Cloudinary active:", cloudinary.config().cloud_name)
+      // 2️⃣ Upload PDF buffer to Cloudinary
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: "raw",
+            folder: "resumes",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
       });
 
-      await newResume.save();
+      // 3️⃣ Save resume data to DB
+      const resume = await Resume.create({
+        userId: req.user._id,
+        resumeUrl: uploadResult.secure_url,
+        extractedText,
+      });
 
       res.status(201).json({
         message: "Resume uploaded successfully",
-        resume: newResume,
+        resume,
       });
     } catch (err) {
-      console.error("Error uploading resume:", err);
+      console.error("Resume upload error:", err);
       res.status(500).json({ error: err.message });
     }
   }

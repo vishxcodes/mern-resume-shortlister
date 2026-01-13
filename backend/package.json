@@ -14,6 +14,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.61.0",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
@@ -26,7 +27,7 @@
     "nodemailer": "^7.0.9",
     "nodemon": "^3.1.10",
     "pdf-lib": "^1.17.1",
-    "pdf-parse": "^1.1.1",
+    "pdf-parse": "^1.1.4",
     "python-shell": "^5.0.0"
   }
 }

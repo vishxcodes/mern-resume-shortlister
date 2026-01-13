@@ -1,5 +1,12 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config({ debug: true });
+console.log("ENV CHECK:", {
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+});
+
+import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/UserRoutes.js";
@@ -7,7 +14,9 @@ import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 
-dotenv.config({ debug: true });
+import cloudinary, { initCloudinary } from "./config/cloudinary.js";
+initCloudinary();
+
 
 connectDB();
 
@@ -48,7 +57,7 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 
 // Serve uploaded files publicly
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads"));
 
 // Start server
 const PORT = process.env.PORT || 8000;

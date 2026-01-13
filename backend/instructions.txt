@@ -1,0 +1,10 @@
+node jobs/worker.js
+redis-server
+npm run dev (backend)
+npm run dev (frontend)
+python3 utils/tfidf_rank.py
+
+cloudinary--
+cloud name - dkw3dx53h
+api secret - z9IxJYQ5kAYhXFwt7BqCgU1jY68
+api key - 728114981256135
