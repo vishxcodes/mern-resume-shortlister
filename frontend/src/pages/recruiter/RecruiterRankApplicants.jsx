@@ -1,15 +1,22 @@
 // RecruiterRankApplicants.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 
-export default function RecruiterRankApplicants({ jobId }) {
-  const [applicants, setApplicants] = useState([]); // ALWAYS an array
-  const [skipped, setSkipped] = useState([]); // application IDs skipped by backend
+export default function RecruiterRankApplicants() {
+  const { jobId } = useParams(); // ✅ GET jobId FROM URL
+
+  const [applicants, setApplicants] = useState([]);
+  const [skipped, setSkipped] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
+    if (!jobId) {
+      console.warn("RecruiterRankApplicants: jobId is undefined, skipping fetch");
+      return;
+    }
     fetchApplicants();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
@@ -18,60 +25,37 @@ export default function RecruiterRankApplicants({ jobId }) {
     setLoading(true);
     setErrorMsg(null);
     setMessage(null);
+
     try {
-      const token = localStorage.getItem("token"); // adjust if you store token elsewhere
-      const res = await axios.get(`/api/applications/rank/${jobId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const token = localStorage.getItem("token");
 
-      console.log("Rank API response (success):", res.data);
+      const res = await axios.get(
+        `/api/applications/rank/${jobId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
 
-      // Resilience: backend may return different shapes. Normalize to { applicants: [], skipped: [], message }
+      console.log("Rank API response:", res.data);
+
       const data = res.data;
 
-      // If the backend returns an array directly (old behavior), treat that as applicants array:
-      if (Array.isArray(data)) {
-        setApplicants(data);
-        setSkipped([]);
-        setMessage(null);
-      } else {
-        // If backend returned object, try to pull applicants/skipped/message fields safely
-        const safeApplicants = Array.isArray(data.applicants)
-          ? data.applicants
-          : Array.isArray(data) // fallback if server returned array at top-level
-          ? data
-          : [];
+      setApplicants(Array.isArray(data.applicants) ? data.applicants : []);
+      setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
+      setMessage(data.message || null);
 
-        setApplicants(safeApplicants);
-        setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
-        setMessage(data.message || data.error || null);
-      }
     } catch (err) {
       console.error("Error fetching applicants:", err);
 
-      // If server returned an error response (400/500) with useful body, use that
-      if (err.response && err.response.data) {
-        console.log("Server error body:", err.response.data);
-        const data = err.response.data;
-
-        // If data contains applicants array despite being error, use it
-        if (Array.isArray(data.applicants)) {
-          setApplicants(data.applicants);
-          setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
-          setMessage(data.message || null);
-        } else {
-          // Otherwise, make sure applicants stays an array and surface message
-          setApplicants([]);
-          setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
-          setMessage(data.message || data.error || "Failed to fetch ranked applicants");
-        }
+      if (err.response?.data) {
+        setMessage(err.response.data.message || err.response.data.error);
+        setSkipped(err.response.data.skipped || []);
       } else {
-        // Network error or no response
-        setApplicants([]);
-        setSkipped([]);
         setMessage("Network error — could not reach server");
       }
-      setErrorMsg("Failed to fetch applicants. See console for details.");
+
+      setApplicants([]);
+      setErrorMsg("Failed to fetch applicants");
     } finally {
       setLoading(false);
     }
@@ -81,27 +65,18 @@ export default function RecruiterRankApplicants({ jobId }) {
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-3">Ranked Applicants</h2>
 
-      {loading && <div>Loading applicants...</div>}
+      {loading && <p>Loading applicants...</p>}
+      {errorMsg && <p className="text-red-600">{errorMsg}</p>}
+      {message && <p className="text-yellow-700">{message}</p>}
 
-      {errorMsg && <div className="text-red-600 mb-2">{errorMsg}</div>}
-
-      {message && (
-        <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-          {message}
+      {skipped.length > 0 && (
+        <div className="mb-3 text-sm text-gray-600">
+          Skipped applications (missing resume text): {skipped.join(", ")}
         </div>
       )}
 
-      {skipped && skipped.length > 0 && (
-        <div className="mb-3 p-2 bg-gray-50 border rounded">
-          <strong>Skipped applications (missing/empty resumes):</strong>{" "}
-          {skipped.slice(0, 10).join(", ")}
-          {skipped.length > 10 ? ` ... (+${skipped.length - 10} more)` : ""}
-        </div>
-      )}
-
-      {/* Safe mapping: applicants is guaranteed to be an array */}
       {applicants.length === 0 && !loading ? (
-        <div>No applicants to display.</div>
+        <p>No applicants to display.</p>
       ) : (
         <table className="min-w-full text-left">
           <thead>
@@ -113,24 +88,14 @@ export default function RecruiterRankApplicants({ jobId }) {
             </tr>
           </thead>
           <tbody>
-            {applicants.map((app) => {
-              // app shape may vary; be defensive
-              const candidate = app.candidateId || app.candidate || {};
-              const name = candidate.name || (candidate.fullName ? candidate.fullName : "Unknown");
-              const email = candidate.email || "—";
-              const scoreDisplay =
-                app.matchScoreDisplay ?? (typeof app.matchScore === "number" ? app.matchScore.toFixed(3) : "0.000");
-              const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleString() : "—";
-
-              return (
-                <tr key={app._id || app.id || Math.random()}>
-                  <td>{name}</td>
-                  <td>{email}</td>
-                  <td>{scoreDisplay}</td>
-                  <td>{createdAt}</td>
-                </tr>
-              );
-            })}
+            {applicants.map(app => (
+              <tr key={app._id}>
+                <td>{app.candidateId?.name || "Unknown"}</td>
+                <td>{app.candidateId?.email || "—"}</td>
+                <td>{app.matchScoreDisplay}</td>
+                <td>{new Date(app.createdAt).toLocaleString()}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}

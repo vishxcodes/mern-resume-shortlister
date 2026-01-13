@@ -22,21 +22,31 @@ export default function RecruiterApplicants() {
 
   useEffect(() => {
     const fetchApplicants = async () => {
-      try {
-        let response;
-        if (jobId) {
-          response = await API.get(`/applications/job/${jobId}`);
-        } else {
-          response = await API.get(`/applications/recruiter`);
-        }
-        setApplicants(response.data);
-      } catch (err) {
-        toast.error("Error fetching applicants");
-        console.error("Error fetching applicants:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  setLoading(true);
+
+  try {
+    let response;
+
+    if (jobId) {
+      // 🔹 Fetch applicants for a specific job
+      response = await API.get(`/applications/job/${jobId}`);
+      setApplicants(Array.isArray(response.data) ? response.data : []);
+    } else {
+      // 🔹 Fetch all applicants for recruiter
+      response = await API.get(`/applications/recruiter`);
+
+      // backend returns an array here
+      setApplicants(Array.isArray(response.data) ? response.data : []);
+    }
+  } catch (err) {
+    toast.error("Error fetching applicants");
+    console.error("Error fetching applicants:", err);
+    setApplicants([]); // safety fallback
+  } finally {
+    setLoading(false);
+  }
+};
+
     fetchApplicants();
   }, [jobId]);
 
