@@ -9,7 +9,7 @@ console.log("ENV CHECK:", {
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
-import userRoutes from "./routes/UserRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
