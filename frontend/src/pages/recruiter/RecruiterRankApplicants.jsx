@@ -1,10 +1,10 @@
 // RecruiterRankApplicants.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
+import API from "../../api/axiosInstance"; // ✅ USE API INSTANCE
 
 export default function RecruiterRankApplicants() {
-  const { jobId } = useParams(); // ✅ GET jobId FROM URL
+  const { jobId } = useParams();
 
   const [applicants, setApplicants] = useState([]);
   const [skipped, setSkipped] = useState([]);
@@ -14,7 +14,7 @@ export default function RecruiterRankApplicants() {
 
   useEffect(() => {
     if (!jobId) {
-      console.warn("RecruiterRankApplicants: jobId is undefined, skipping fetch");
+      console.warn("RecruiterRankApplicants: jobId is undefined");
       return;
     }
     fetchApplicants();
@@ -27,22 +27,14 @@ export default function RecruiterRankApplicants() {
     setMessage(null);
 
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `/api/applications/rank/${jobId}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }
-      );
+      // ✅ NO /api HERE — axiosInstance already has it
+      const res = await API.get(`/applications/rank/${jobId}`);
 
       console.log("Rank API response:", res.data);
 
-      const data = res.data;
-
-      setApplicants(Array.isArray(data.applicants) ? data.applicants : []);
-      setSkipped(Array.isArray(data.skipped) ? data.skipped : []);
-      setMessage(data.message || null);
+      setApplicants(Array.isArray(res.data.applicants) ? res.data.applicants : []);
+      setSkipped(Array.isArray(res.data.skipped) ? res.data.skipped : []);
+      setMessage(res.data.message || null);
 
     } catch (err) {
       console.error("Error fetching applicants:", err);
@@ -88,7 +80,7 @@ export default function RecruiterRankApplicants() {
             </tr>
           </thead>
           <tbody>
-            {applicants.map(app => (
+            {applicants.map((app) => (
               <tr key={app._id}>
                 <td>{app.candidateId?.name || "Unknown"}</td>
                 <td>{app.candidateId?.email || "—"}</td>
