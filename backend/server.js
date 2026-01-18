@@ -13,6 +13,8 @@ import userRoutes from "./routes/userRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import recruiterRoutes from "./routes/recruiterRoutes.js";
+
 
 import cloudinary, { initCloudinary } from "./config/cloudinary.js";
 initCloudinary();
@@ -64,6 +66,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/recruiter", recruiterRoutes);
 
 // Serve uploaded files publicly
 // app.use("/uploads", express.static("uploads"));

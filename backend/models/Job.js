@@ -30,6 +30,11 @@ const jobSchema = new mongoose.Schema(
       enum: ["Internship", "Fresher", "Junior", "Mid", "Senior"],
       default: "Internship",
     },
+    status: {
+    type: String,
+    enum: ["open", "closed"],
+    default: "open",
+    },
   },
   { timestamps: true }
 );
