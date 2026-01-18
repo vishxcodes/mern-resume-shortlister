@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../../api/axiosInstance";
+import RecentActivity from "../../components/RecentActivity";
+import ActiveJobsTable from "../../components/ActiveJobsTable";
 
 export default function RecruiterOverview() {
   const [stats, setStats] = useState({
@@ -25,11 +27,13 @@ export default function RecruiterOverview() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Page title */}
       <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">
         Dashboard Overview
       </h1>
 
+      {/* Stats section */}
       {loading ? (
         <p className="text-gray-500 dark:text-gray-400">
           Loading latest statistics...
@@ -67,6 +71,17 @@ export default function RecruiterOverview() {
           </div>
         </div>
       )}
+
+      {/* Main dashboard content */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Active Jobs Table */}
+        <div className="md:col-span-2">
+          <ActiveJobsTable />
+        </div>
+
+        {/* Recent Activity */}
+        <RecentActivity />
+      </div>
     </div>
   );
 }
