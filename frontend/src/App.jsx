@@ -91,7 +91,7 @@ export default function App() {
 function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!user)
+  if (!user) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
         <h1 className="text-3xl font-bold mb-4 text-blue-700 dark:text-gray-100">
@@ -116,13 +116,16 @@ function HomePage() {
         </div>
       </div>
     );
-
-  // 🔁 Redirect logged-in users based on role
-  if (user.role === "candidate") {
-    return <CandidateDashboard />;
-  } else if (user.role === "recruiter") {
-    return <RecruiterDashboard />;
-  } else {
-    return <Navigate to="/login" replace />;
   }
+
+  // ✅ Redirect — NOT render
+  if (user.role === "candidate") {
+    return <Navigate to="/candidate" replace />;
+  }
+
+  if (user.role === "recruiter") {
+    return <Navigate to="/recruiter" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
