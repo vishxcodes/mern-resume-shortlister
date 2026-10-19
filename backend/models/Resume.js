@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const resumeSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   resumeUrl: { type: String },
-extractedText: { type: String },
+  fileUrl: { type: String },
   extractedText: { type: String }, // resume text for TF-IDF
 }, { timestamps: true });
 

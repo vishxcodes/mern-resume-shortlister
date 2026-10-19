@@ -55,7 +55,7 @@ router.get("/my-applications", protect, authorizeRoles("candidate"), async (req,
   try {
     const applications = await Application.find({ candidateId: req.user._id })
       .populate("jobId", "title description role type location experienceLevel")
-      .populate("resumeId", "fileUrl")
+      .populate("resumeId", "fileUrl resumeUrl")
       .sort({ createdAt: -1 });
 
     res.status(200).json(applications);
@@ -66,13 +66,35 @@ router.get("/my-applications", protect, authorizeRoles("candidate"), async (req,
 });
 
 /* ============================
-   RECRUITER: VIEW APPLICANTS
+   RECRUITER: ALL APPLICANTS
+============================ */
+router.get("/recruiter", protect, authorizeRoles("recruiter"), async (req, res) => {
+  try {
+    const jobs = await Job.find({ recruiterId: req.user._id }, "_id");
+    const jobIds = jobs.map((j) => j._id);
+
+    const applications = await Application.find({ jobId: { $in: jobIds } })
+      .populate("candidateId", "name email")
+      .populate("resumeId", "fileUrl resumeUrl")
+      .populate("jobId", "title role location type")
+      .sort({ createdAt: -1 });
+
+    res.json(applications);
+  } catch (err) {
+    console.error("Error fetching recruiter applications:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================
+   RECRUITER: VIEW APPLICANTS FOR A JOB
 ============================ */
 router.get("/job/:jobId", protect, authorizeRoles("recruiter"), async (req, res) => {
   try {
     const apps = await Application.find({ jobId: req.params.jobId })
       .populate("candidateId", "name email")
-      .populate("resumeId", "fileUrl");
+      .populate("resumeId", "fileUrl resumeUrl")
+      .populate("jobId", "title role location type");
 
     res.json(apps);
   } catch (err) {

@@ -1,39 +1,47 @@
 import { useLocation, Link } from "react-router-dom";
-import { HomeIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 
 export default function Breadcrumb() {
   const location = useLocation();
   const pathnames = location.pathname.split("/").filter((x) => x);
 
-  // Function to prettify the path segments
-  const formatPath = (segment) =>
-    segment.charAt(0).toUpperCase() + segment.slice(1);
+  const isRecruiter = location.pathname.startsWith("/recruiter");
+  const homePath = isRecruiter ? "/recruiter" : "/candidate";
+
+  const formatPath = (segment) => {
+    // Replace hyphens with spaces and capitalize
+    return segment
+      .replace(/-/g, " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   return (
-    <nav className="flex items-center text-sm text-gray-600 mb-6">
+    <nav className="flex items-center text-xs text-zinc-500 mb-6 font-medium">
       <Link
-        to="/candidate"
-        className="flex items-center text-blue-600 hover:text-blue-700 transition"
+        to={homePath}
+        className="hover:text-zinc-200 transition"
       >
-        <HomeIcon className="w-4 h-4 mr-1" />
-        Dashboard
+        {isRecruiter ? "Recruiter" : "Candidate"}
       </Link>
 
-      {pathnames.map((name, index) => {
-        const routeTo = "/" + pathnames.slice(0, index + 1).join("/");
-        const isLast = index === pathnames.length - 1;
+      {pathnames.slice(1).map((name, index) => {
+        // Construct route
+        const routeTo = "/" + pathnames.slice(0, index + 2).join("/");
+        const isLast = index === pathnames.length - 2;
 
         return (
           <div key={routeTo} className="flex items-center">
-            <ChevronRightIcon className="w-4 h-4 mx-1 text-gray-400" />
+            <ChevronRightIcon className="w-3.5 h-3.5 mx-1.5 text-zinc-600" />
             {isLast ? (
-              <span className="text-gray-500 font-medium">
+              <span className="text-zinc-300 font-semibold">
                 {formatPath(name)}
               </span>
             ) : (
               <Link
                 to={routeTo}
-                className="text-blue-600 hover:text-blue-700 transition"
+                className="hover:text-zinc-200 transition"
               >
                 {formatPath(name)}
               </Link>

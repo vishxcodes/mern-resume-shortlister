@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../../api/axiosInstance";
-import { Loader2Icon, BriefcaseIcon } from "lucide-react";
+import { Loader2Icon, BriefcaseIcon, SparklesIcon, ArrowRightIcon } from "lucide-react";
 
 export default function RecruiterRankJobs() {
   const [jobs, setJobs] = useState([]);
@@ -21,38 +21,64 @@ export default function RecruiterRankJobs() {
     fetchJobs();
   }, []);
 
-  if (loading)
-    return (
-      <div className="flex justify-center mt-10">
-        <Loader2Icon className="animate-spin w-8 h-8 text-blue-500" />
-      </div>
-    );
-
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">Rank Applicants</h1>
-      {jobs.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">You haven’t posted any jobs yet.</p>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          AI Candidate Ranking
+        </h1>
+        <p className="text-xs text-zinc-400 mt-1">
+          Select a job position to run TF-IDF vectorization and cosine similarity against applicant resumes.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-zinc-500 py-12 justify-center">
+          <Loader2Icon className="animate-spin w-4 h-4 text-zinc-400" />
+          <span>Loading positions...</span>
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="p-12 text-center rounded-xl bg-zinc-900/40 border border-zinc-800/80">
+          <BriefcaseIcon className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-zinc-200">No jobs to rank</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+            You need at least one active job posting with applicants to perform AI resume ranking.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {jobs.map((job) => (
             <div
               key={job._id}
-              className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+              className="p-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl hover:border-zinc-700/80 transition flex flex-col justify-between"
             >
-              <div className="flex items-center gap-3 mb-2">
-                <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-xl font-semibold">{job.title}</h3>
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-sm font-semibold text-white tracking-tight">
+                    {job.title}
+                  </h3>
+                  <span className="text-[11px] font-mono text-zinc-500">
+                    {job.role || "General"}
+                  </span>
+                </div>
+                <p className="text-zinc-400 text-xs mb-4 line-clamp-3 leading-relaxed">
+                  {job.description}
+                </p>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                {job.description}
-              </p>
-              <Link
-                to={`/recruiter/rank-applicants/${job._id}`}
-                className="block text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition"
-              >
-                Rank Applicants
-              </Link>
+
+              <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                <span className="text-[11px] font-mono text-zinc-500">
+                  {job.type} • {job.experienceLevel}
+                </span>
+                <Link
+                  to={`/recruiter/rank-applicants/${job._id}`}
+                  className="inline-flex items-center gap-1.5 bg-white text-zinc-950 hover:bg-zinc-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5 text-zinc-950" />
+                  <span>Rank Resumes</span>
+                  <ArrowRightIcon className="w-3.5 h-3.5 text-zinc-950" />
+                </Link>
+              </div>
             </div>
           ))}
         </div>

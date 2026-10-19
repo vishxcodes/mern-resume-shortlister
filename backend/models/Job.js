@@ -10,15 +10,13 @@ const jobSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
 
-    // 🧭 New fields for filtering/searching
+    // Flexible fields for filtering/searching
     role: {
       type: String,
-      enum: ["Frontend", "Backend", "Full Stack", "Data Science", "Marketing", "Other"],
       default: "Other",
     },
     type: {
       type: String,
-      enum: ["Remote", "On-site", "Hybrid"],
       default: "Remote",
     },
     location: {
@@ -27,13 +25,12 @@ const jobSchema = new mongoose.Schema(
     },
     experienceLevel: {
       type: String,
-      enum: ["Internship", "Fresher", "Junior", "Mid", "Senior"],
       default: "Internship",
     },
     status: {
-    type: String,
-    enum: ["open", "closed"],
-    default: "open",
+      type: String,
+      enum: ["open", "closed"],
+      default: "open",
     },
   },
   { timestamps: true }

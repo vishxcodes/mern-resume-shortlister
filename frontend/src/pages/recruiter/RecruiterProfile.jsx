@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../../api/axiosInstance";
 import { toast } from "react-toastify";
-import { UserIcon, MailIcon, BuildingIcon, Loader2Icon } from "lucide-react";
+import { UserIcon, MailIcon, BuildingIcon, Loader2Icon, SparklesIcon } from "lucide-react";
 
 export default function RecruiterProfile() {
   const [profile, setProfile] = useState({
@@ -13,7 +13,6 @@ export default function RecruiterProfile() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  // ✅ Fetch recruiter profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -34,12 +33,10 @@ export default function RecruiterProfile() {
     fetchProfile();
   }, []);
 
-  // ✅ Handle input change
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUpdating(true);
@@ -60,96 +57,106 @@ export default function RecruiterProfile() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center mt-20">
-        <Loader2Icon className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="flex items-center gap-2 text-xs text-zinc-500 py-16 justify-center">
+        <Loader2Icon className="w-4 h-4 animate-spin text-zinc-400" />
+        <span>Loading company profile...</span>
       </div>
     );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-300">
-      <h1 className="text-3xl font-bold mb-6 text-blue-700 dark:text-blue-400">
-        My Profile
-      </h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Company & Recruiter Profile
+        </h1>
+        <p className="text-xs text-zinc-400 mt-1">
+          Manage your organizational details visible on job postings.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <UserIcon className="inline w-4 h-4 mr-1" /> Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={profile.name}
-            onChange={handleChange}
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-            required
-          />
-        </div>
+      <div className="bg-zinc-900/60 border border-zinc-800/80 p-6 sm:p-8 rounded-xl shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              <UserIcon className="inline w-3.5 h-3.5 mr-1 text-zinc-400" /> Contact Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={profile.name}
+              onChange={handleChange}
+              className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+              required
+            />
+          </div>
 
-        {/* Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <MailIcon className="inline w-4 h-4 mr-1" /> Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={profile.email}
-            disabled
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
-          />
-        </div>
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              <MailIcon className="inline w-3.5 h-3.5 mr-1 text-zinc-400" /> Account Email (Read-only)
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={profile.email}
+              disabled
+              className="w-full p-2.5 rounded-lg border border-zinc-800/60 bg-zinc-950/50 text-zinc-500 text-xs cursor-not-allowed"
+            />
+          </div>
 
-        {/* Company */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            <BuildingIcon className="inline w-4 h-4 mr-1" /> Company
-          </label>
-          <input
-            type="text"
-            name="company"
-            value={profile.company}
-            onChange={handleChange}
-            placeholder="Your organization name"
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
-        </div>
+          {/* Company */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              <BuildingIcon className="inline w-3.5 h-3.5 mr-1 text-zinc-400" /> Company / Organization
+            </label>
+            <input
+              type="text"
+              name="company"
+              value={profile.company}
+              onChange={handleChange}
+              placeholder="e.g. Acme Technologies"
+              className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+            />
+          </div>
 
-        {/* Bio */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Bio / Description
-          </label>
-          <textarea
-            name="bio"
-            rows="3"
-            value={profile.bio}
-            onChange={handleChange}
-            placeholder="Briefly describe yourself or your company..."
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-          ></textarea>
-        </div>
+          {/* Bio */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              About the Company
+            </label>
+            <textarea
+              name="bio"
+              rows="4"
+              value={profile.bio}
+              onChange={handleChange}
+              placeholder="Describe your organization mission, engineering culture, or hiring focus..."
+              className="w-full p-3 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition leading-relaxed"
+            />
+          </div>
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={updating}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md transition-all disabled:opacity-70"
-          >
-            {updating ? (
-              <>
-                <Loader2Icon className="w-5 h-5 animate-spin" /> Updating...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Submit */}
+          <div className="pt-3 border-t border-zinc-800/80 flex justify-end">
+            <button
+              type="submit"
+              disabled={updating}
+              className="inline-flex items-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200 px-5 py-2.5 rounded-lg text-xs font-semibold transition shadow-sm disabled:opacity-50"
+            >
+              {updating ? (
+                <>
+                  <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                "Save Profile Changes"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

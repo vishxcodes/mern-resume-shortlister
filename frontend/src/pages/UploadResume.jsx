@@ -1,21 +1,19 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useEffect } from "react";
 import API from "../api/axiosInstance";
-import { AuthContext } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { FileTextIcon, EyeIcon, UploadIcon } from "lucide-react";
 
 export default function UploadResume() {
-  const { user } = useContext(AuthContext);
   const [file, setFile] = useState(null);
   const [uploadedResume, setUploadedResume] = useState(null);
 
-  // 🧠 Fetch the user's existing resume when page loads
   useEffect(() => {
     const fetchResume = async () => {
       try {
         const { data } = await API.get("/resumes/me");
-        if (data.resume) setUploadedResume(data.resume);
+        setUploadedResume(data.resume);
       } catch (err) {
-        console.error("No resume found yet");
+        console.error(err);
       }
     };
     fetchResume();
@@ -31,6 +29,7 @@ export default function UploadResume() {
       const { data } = await API.post("/resumes/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       setUploadedResume(data.resume);
       toast.success("Resume uploaded successfully!");
     } catch (err) {
@@ -39,60 +38,50 @@ export default function UploadResume() {
     }
   };
 
-  // 🧩 View resume function
   const handleViewResume = () => {
     if (!uploadedResume) return;
-    const fileUrl = `http://localhost:8000/${uploadedResume.fileUrl}`;
-    window.open(fileUrl, "_blank");
+    const targetUrl = uploadedResume.resumeUrl || uploadedResume.fileUrl;
+    if (!targetUrl) return;
+    const finalHref = targetUrl.startsWith("http")
+      ? targetUrl
+      : `http://localhost:8000/${targetUrl}`;
+    window.open(finalHref, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <div className="p-6 rounded-xl bg-white shadow-lg border border-gray-100">
-      <h2 className="text-lg font-semibold mb-3">Upload Resume</h2>
+    <div className="p-6 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 max-w-xl mx-auto space-y-4">
+      <h2 className="text-base font-semibold text-white">Upload Resume</h2>
 
-      {/* Upload form */}
       <div className="flex items-center gap-3">
         <input
           type="file"
           onChange={(e) => setFile(e.target.files[0])}
           accept=".pdf,.doc,.docx"
-          className="border p-2 w-full"
+          className="border border-zinc-800 bg-zinc-950 p-2 rounded-lg text-xs text-zinc-300 w-full"
         />
         <button
           onClick={handleUpload}
-          className="bg-green-600 text-white px-3 py-1 rounded"
+          className="bg-white text-zinc-950 hover:bg-zinc-200 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap shadow-sm"
         >
-          Upload
+          <UploadIcon className="w-3.5 h-3.5" />
+          <span>Upload</span>
         </button>
       </div>
 
-      {/* Uploaded resume info */}
-      {uploadedResume ? (
-        <div className="mt-4 p-3 bg-green-50 border border-green-300 rounded">
-          <h3 className="font-semibold text-green-700 mb-1">
-            Your current uploaded resume:
-          </h3>
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">File:</span>{" "}
-            {uploadedResume.fileUrl.split("/").pop()}
-          </p>
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">Uploaded on:</span>{" "}
-            {new Date(uploadedResume.createdAt).toLocaleString()}
-          </p>
-
-          {/* View Resume Button */}
+      {uploadedResume && (
+        <div className="pt-4 border-t border-zinc-800 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-zinc-300">
+            <FileTextIcon className="w-4 h-4 text-zinc-400" />
+            <span>Active Resume on File</span>
+          </div>
           <button
             onClick={handleViewResume}
-            className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
+            className="text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"
           >
-            View Resume
+            <EyeIcon className="w-3.5 h-3.5" />
+            <span>Preview</span>
           </button>
         </div>
-      ) : (
-        <p className="mt-3 text-sm text-gray-500">
-          No resume uploaded yet. Please upload one.
-        </p>
       )}
     </div>
   );

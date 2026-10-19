@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axiosInstance";
 import { toast } from "react-toastify";
-import { BriefcaseIcon, MapPinIcon, Loader2Icon } from "lucide-react";
+import { BriefcaseIcon, Loader2Icon, ArrowLeftIcon } from "lucide-react";
 
 export default function RecruiterPostJob() {
   const navigate = useNavigate();
@@ -10,10 +10,10 @@ export default function RecruiterPostJob() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    role: "",
-    type: "",
-    location: "",
-    experienceLevel: "",
+    role: "Full Stack",
+    type: "Remote",
+    location: "Remote",
+    experienceLevel: "Mid",
   });
 
   const handleChange = (e) => {
@@ -39,136 +39,155 @@ export default function RecruiterPostJob() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-      <div className="flex items-center gap-3 mb-6">
-        <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Post a New Job
-        </h1>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 transition"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Post a New Job
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Create a position to receive and rank candidates with TF-IDF similarity.
+          </p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Job Title */}
-        <div>
-          <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Job Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
-            placeholder="e.g. Frontend Developer Intern"
-          />
-        </div>
-
-        {/* Job Description */}
-        <div>
-          <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Job Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            name="description"
-            rows="4"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
-            placeholder="Describe the responsibilities, required skills, and expectations..."
-          ></textarea>
-        </div>
-
-        {/* Role */}
-        <div>
-          <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Role
-          </label>
-          <input
-            type="text"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            placeholder="e.g. Frontend / Backend / Data Science"
-            className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
-          />
-        </div>
-
-        {/* Type & Experience */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-zinc-900/60 border border-zinc-800/80 p-6 sm:p-8 rounded-xl shadow-xl">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Job Title */}
           <div>
-            <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Job Type
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Job Title <span className="text-rose-400">*</span>
             </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
-            >
-              <option value="">Select Type</option>
-              <option>Remote</option>
-              <option>On-site</option>
-              <option>Hybrid</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Experience Level
-            </label>
-            <select
-              name="experienceLevel"
-              value={formData.experienceLevel}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
-            >
-              <option value="">Select Level</option>
-              <option>Internship</option>
-              <option>Fresher</option>
-              <option>Junior</option>
-              <option>Mid</option>
-              <option>Senior</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div>
-          <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Location
-          </label>
-          <div className="relative">
-            <MapPinIcon className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              name="location"
-              value={formData.location}
+              name="title"
+              value={formData.title}
               onChange={handleChange}
-              placeholder="e.g. Delhi, Bangalore, Remote"
-              className="w-full p-3 pl-10 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition"
+              required
+              placeholder="e.g. Senior Frontend Engineer"
+              className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
             />
           </div>
-        </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-all disabled:opacity-70"
-          >
-            {loading ? (
-              <>
-                <Loader2Icon className="animate-spin w-5 h-5" /> Posting...
-              </>
-            ) : (
-              "Post Job"
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Job Description */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Job Description & Required Skills <span className="text-rose-400">*</span>
+            </label>
+            <textarea
+              name="description"
+              rows="5"
+              value={formData.description}
+              onChange={handleChange}
+              required
+              placeholder="Provide responsibilities, tech stack, and key skills. This text will be used to calculate TF-IDF similarity scores against applicant resumes..."
+              className="w-full p-3 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition leading-relaxed"
+            />
+            <p className="text-[11px] text-zinc-500 mt-1">
+              Tip: Include specific frameworks and keywords for higher ranking accuracy.
+            </p>
+          </div>
+
+          {/* Role and Location */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                Role Category
+              </label>
+              <input
+                type="text"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                placeholder="e.g. Frontend, Backend, ML"
+                className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                Location
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g. San Francisco, CA / Remote"
+                className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 placeholder-zinc-500 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+              />
+            </div>
+          </div>
+
+          {/* Type & Experience */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                Workplace Type
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+              >
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+                Experience Level
+              </label>
+              <select
+                name="experienceLevel"
+                value={formData.experienceLevel}
+                onChange={handleChange}
+                className="w-full p-2.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 text-xs focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+              >
+                <option value="Internship">Internship</option>
+                <option value="Fresher">Fresher / Entry</option>
+                <option value="Junior">Junior</option>
+                <option value="Mid">Mid-Level</option>
+                <option value="Senior">Senior</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/recruiter/jobs")}
+              className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200 px-5 py-2 rounded-lg text-xs font-semibold transition shadow-sm disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                  <span>Publishing...</span>
+                </>
+              ) : (
+                "Publish Job Opening"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

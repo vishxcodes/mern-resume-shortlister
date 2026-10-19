@@ -3,9 +3,12 @@ import API from "../../api/axiosInstance";
 import { Link } from "react-router-dom";
 import {
   BriefcaseIcon,
-  BuildingIcon,
   SearchIcon,
   RotateCcwIcon,
+  MapPinIcon,
+  SparklesIcon,
+  ArrowRightIcon,
+  Loader2Icon,
 } from "lucide-react";
 
 export default function CandidateJobs() {
@@ -18,14 +21,15 @@ export default function CandidateJobs() {
   const [recommendedJobs, setRecommendedJobs] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
-  // 🧠 Fetch recommended jobs on mount
+  // Fetch recommended jobs on mount
   useEffect(() => {
     const fetchRecommended = async () => {
       try {
         const { data } = await API.get("/jobs/recommended");
-        setRecommendedJobs(data);
+        setRecommendedJobs(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Error fetching recommended jobs:", err);
+        // quiet fallback if candidate doesn't have resume yet
+        setRecommendedJobs([]);
       } finally {
         setLoadingRecommendations(false);
       }
@@ -33,7 +37,7 @@ export default function CandidateJobs() {
     fetchRecommended();
   }, []);
 
-  // 🔍 Fetch jobs based on filters/search
+  // Fetch jobs based on filters/search
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
@@ -41,7 +45,7 @@ export default function CandidateJobs() {
         const { data } = await API.get("/jobs", {
           params: { search, role, type, experienceLevel },
         });
-        setJobs(data);
+        setJobs(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching jobs:", err);
       } finally {
@@ -59,174 +63,171 @@ export default function CandidateJobs() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* 🎯 Recommended Jobs Section */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4 text-blue-700 dark:text-blue-400">
-          Recommended for You
-        </h2>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Explore Positions
+        </h1>
+        <p className="text-xs text-zinc-400 mt-1">
+          Discover opportunities that match your technical background and experience.
+        </p>
+      </div>
 
-        {loadingRecommendations ? (
-          <p className="text-gray-500 dark:text-gray-400">
-            Loading recommendations...
-          </p>
-        ) : recommendedJobs.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400">
-            Upload a resume to get personalized recommendations.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {recommendedJobs.map((job) => (
+      {/* Recommended Jobs Banner (if candidate has a resume) */}
+      {!loadingRecommendations && recommendedJobs.length > 0 && (
+        <div className="p-5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-3">
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              Recommended for your resume
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {recommendedJobs.slice(0, 3).map((job) => (
               <Link
                 key={job._id}
                 to={`/candidate/jobs/${job._id}`}
-                className="block hover:shadow-xl transition-shadow duration-300"
+                className="p-3.5 rounded-lg bg-zinc-950/70 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between"
               >
-                <div className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300 h-full">
-                  <div className="flex items-center gap-3 mb-3">
-                    <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                      {job.title}
-                    </h3>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
-                    {job.description}
-                  </p>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">
-                    Match Score: {job.score}
-                  </p>
+                <div>
+                  <h3 className="text-xs font-semibold text-white truncate">{job.title}</h3>
+                  <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{job.description}</p>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                  <span>{job.location}</span>
+                  <span className="text-emerald-400 flex items-center gap-0.5">
+                    View <ArrowRightIcon className="w-3 h-3" />
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          {/* Keyword Search */}
+          <div className="sm:col-span-2 relative">
+            <SearchIcon className="w-3.5 h-3.5 absolute left-3 top-3 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search by title, skill, or keyword..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition"
+            />
+          </div>
+
+          {/* Workplace Type */}
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-100 focus:border-zinc-500 outline-none transition"
+          >
+            <option value="">All Types (Remote/On-site)</option>
+            <option value="Remote">Remote</option>
+            <option value="On-site">On-site</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+
+          {/* Experience */}
+          <select
+            value={experienceLevel}
+            onChange={(e) => setExperienceLevel(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-950 text-xs text-zinc-100 focus:border-zinc-500 outline-none transition"
+          >
+            <option value="">All Experience Levels</option>
+            <option value="Internship">Internship</option>
+            <option value="Fresher">Fresher / Entry</option>
+            <option value="Junior">Junior</option>
+            <option value="Mid">Mid-Level</option>
+            <option value="Senior">Senior</option>
+          </select>
+        </div>
+
+        {(search || role || type || experienceLevel) && (
+          <div className="flex justify-end pt-1">
+            <button
+              onClick={handleReset}
+              className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white transition"
+            >
+              <RotateCcwIcon className="w-3 h-3" />
+              <span>Reset Filters</span>
+            </button>
+          </div>
         )}
       </div>
 
-      {/* 🔎 Filter Section */}
-      <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">
-        Available Jobs
-      </h1>
-
-      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow border border-gray-200 dark:border-gray-700 transition-colors duration-300">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[220px]">
-          <SearchIcon className="absolute top-3 left-3 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by role, company or skill..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
-          />
-        </div>
-
-        {/* Role Filter */}
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-2 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="">All Roles</option>
-          <option>Frontend</option>
-          <option>Backend</option>
-          <option>Full Stack</option>
-          <option>Data Science</option>
-          <option>Marketing</option>
-        </select>
-
-        {/* Type Filter */}
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-2 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="">All Types</option>
-          <option>Remote</option>
-          <option>On-site</option>
-          <option>Hybrid</option>
-        </select>
-
-        {/* Experience Level Filter */}
-        <select
-          value={experienceLevel}
-          onChange={(e) => setExperienceLevel(e.target.value)}
-          className="border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-2 rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="">All Experience Levels</option>
-          <option>Internship</option>
-          <option>Fresher</option>
-          <option>Junior</option>
-          <option>Mid</option>
-          <option>Senior</option>
-        </select>
-
-        {/* Reset */}
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-        >
-          <RotateCcwIcon className="w-4 h-4" />
-          Reset
-        </button>
-      </div>
-
-      {/* 🧠 Job Results */}
+      {/* Jobs Grid */}
       {loading ? (
-        <p className="text-gray-500 dark:text-gray-400 text-center mt-10">
-          Loading jobs...
-        </p>
+        <div className="flex items-center gap-2 text-xs text-zinc-500 py-12 justify-center">
+          <Loader2Icon className="animate-spin w-4 h-4 text-zinc-400" />
+          <span>Loading opportunities...</span>
+        </div>
       ) : jobs.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-center mt-10">
-          No jobs found.
-        </p>
+        <div className="p-12 text-center rounded-xl bg-zinc-900/40 border border-zinc-800/80">
+          <BriefcaseIcon className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-zinc-200">No positions matched your query</h3>
+          <p className="text-xs text-zinc-500 mt-1">
+            Try adjusting your search terms or clearing the applied filters.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {jobs.map((job) => (
-            <Link
+            <div
               key={job._id}
-              to={`/candidate/jobs/${job._id}`}
-              className="block hover:shadow-xl transition-shadow duration-300"
+              className="p-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl hover:border-zinc-700/80 transition flex flex-col justify-between"
             >
-              <div className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300 h-full">
-                <div className="flex items-center gap-3 mb-3">
-                  <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-base font-semibold text-white tracking-tight">
                     {job.title}
                   </h3>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                    {job.role || "General"}
+                  </span>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm mb-2 line-clamp-3">
+
+                <p className="text-zinc-400 text-xs mb-4 line-clamp-3 leading-relaxed">
                   {job.description}
                 </p>
 
-                <p className="text-gray-500 dark:text-gray-400 text-sm flex items-center gap-2 mb-1">
-                  <BuildingIcon className="w-4 h-4" />
-                  {job.recruiterId?.name || "Anonymous Recruiter"}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mt-3 text-xs">
-                  {job.role && (
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
-                      {job.role}
-                    </span>
-                  )}
+                <div className="flex flex-wrap gap-1.5 text-[11px] mb-4">
                   {job.type && (
-                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">
+                    <span className="px-2 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded">
                       {job.type}
                     </span>
                   )}
                   {job.experienceLevel && (
-                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full">
+                    <span className="px-2 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded">
                       {job.experienceLevel}
                     </span>
                   )}
                   {job.location && (
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-full">
-                      {job.location}
+                    <span className="px-2 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded flex items-center gap-1">
+                      <MapPinIcon className="w-3 h-3 text-zinc-500" /> {job.location}
                     </span>
                   )}
                 </div>
               </div>
-            </Link>
+
+              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                <span className="text-[11px] font-mono text-zinc-500">
+                  {job.recruiterId?.name ? `Posted by ${job.recruiterId.name}` : "Verified Listing"}
+                </span>
+
+                <Link
+                  to={`/candidate/jobs/${job._id}`}
+                  className="inline-flex items-center gap-1.5 bg-white text-zinc-950 hover:bg-zinc-200 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm"
+                >
+                  <span>View & Apply</span>
+                  <ArrowRightIcon className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
       )}

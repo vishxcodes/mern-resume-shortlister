@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axiosInstance";
+import { BriefcaseIcon, ArrowRightIcon } from "lucide-react";
 
 export default function ActiveJobsTable() {
   const [jobs, setJobs] = useState([]);
@@ -22,64 +23,74 @@ export default function ActiveJobsTable() {
     fetchJobs();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-        Loading active jobs...
-      </div>
-    );
-  }
-
-  if (jobs.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-        No active jobs found.
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
-      <h2 className="text-lg font-semibold mb-4">Active Jobs</h2>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="border-b dark:border-gray-700 text-left">
-            <tr>
-              <th className="pb-2">Job Title</th>
-              <th className="pb-2">Applicants</th>
-              <th className="pb-2">Shortlisted</th>
-              <th className="pb-2">Status</th>
-              <th className="pb-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map(job => (
-              <tr
-                key={job._id}
-                className="border-b dark:border-gray-700 last:border-none"
-              >
-                <td className="py-3 font-medium">{job.title}</td>
-                <td>{job.totalApplicants}</td>
-                <td>{job.shortlisted}</td>
-                <td>
-                  <span className="text-green-600 font-medium">Open</span>
-                </td>
-                <td>
-                  <button
-                    onClick={() =>
-                      navigate(`/recruiter/applicants?jobId=${job._id}`)
-                    }
-                    className="text-blue-600 hover:underline"
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-white">Active Positions</h2>
+          <p className="text-xs text-zinc-500">Live applicant metrics for your posted jobs</p>
+        </div>
+        <button
+          onClick={() => navigate("/recruiter/jobs")}
+          className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition"
+        >
+          <span>All Jobs</span>
+          <ArrowRightIcon className="w-3 h-3" />
+        </button>
       </div>
+
+      {loading ? (
+        <div className="py-8 text-center text-xs text-zinc-500">
+          Loading active jobs...
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="py-8 text-center text-xs text-zinc-500">
+          <BriefcaseIcon className="w-8 h-8 text-zinc-700 mx-auto mb-2" />
+          <p>No active jobs posted yet.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-zinc-800/80 text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+              <tr>
+                <th className="pb-3 font-medium">Job Title</th>
+                <th className="pb-3 font-medium">Applicants</th>
+                <th className="pb-3 font-medium">Shortlisted</th>
+                <th className="pb-3 font-medium">Status</th>
+                <th className="pb-3 font-medium text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/50">
+              {jobs.map((job) => (
+                <tr
+                  key={job._id}
+                  className="hover:bg-zinc-900/40 transition"
+                >
+                  <td className="py-3 font-medium text-zinc-200">{job.title}</td>
+                  <td className="py-3 text-zinc-400 font-mono">{job.totalApplicants}</td>
+                  <td className="py-3 text-zinc-400 font-mono">{job.shortlisted}</td>
+                  <td className="py-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-950/40 text-emerald-400 border border-emerald-800/40">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      Open
+                    </span>
+                  </td>
+                  <td className="py-3 text-right">
+                    <button
+                      onClick={() =>
+                        navigate(`/recruiter/applicants?jobId=${job._id}`)
+                      }
+                      className="text-xs text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1 rounded transition"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

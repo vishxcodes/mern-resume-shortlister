@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/axiosInstance";
 import { toast } from "react-toastify";
-import { BriefcaseIcon, BuildingIcon, MapPinIcon, ArrowLeftIcon } from "lucide-react";
+import {
+  BriefcaseIcon,
+  MapPinIcon,
+  ArrowLeftIcon,
+  CalendarIcon,
+  CheckCircle2Icon,
+  Loader2Icon,
+  SparklesIcon,
+} from "lucide-react";
 
 export default function CandidateJobDetails() {
   const { id } = useParams();
@@ -11,7 +19,6 @@ export default function CandidateJobDetails() {
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
 
-  // Fetch job details
   useEffect(() => {
     const fetchJob = async () => {
       try {
@@ -27,13 +34,12 @@ export default function CandidateJobDetails() {
     fetchJob();
   }, [id]);
 
-  // Handle Apply button
   const handleApply = async () => {
     try {
       setApplying(true);
       const { data } = await API.post(`/applications/apply/${id}`);
       toast.success(data.message || "Applied successfully!");
-      navigate("/candidate/jobs");
+      navigate("/candidate/applications");
     } catch (err) {
       toast.error(err.response?.data?.error || "Error applying for job");
     } finally {
@@ -41,71 +47,114 @@ export default function CandidateJobDetails() {
     }
   };
 
-  if (loading)
-    return <p className="text-gray-500 dark:text-gray-400 mt-10">Loading job details...</p>;
-
-  if (!job)
+  if (loading) {
     return (
-      <div className="text-gray-500 dark:text-gray-400 mt-10">
-        <p>Job not found or removed.</p>
+      <div className="flex items-center gap-2 text-xs text-zinc-500 py-16 justify-center">
+        <Loader2Icon className="w-4 h-4 animate-spin text-zinc-400" />
+        <span>Loading job position details...</span>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="p-12 text-center rounded-xl bg-zinc-900/40 border border-zinc-800/80 max-w-lg mx-auto">
+        <p className="text-xs text-zinc-400">Position was not found or is no longer accepting submissions.</p>
         <button
-          onClick={() => navigate(-1)}
-          className="mt-4 text-blue-600 dark:text-blue-400 underline"
+          onClick={() => navigate("/candidate/jobs")}
+          className="mt-4 text-xs font-medium text-white hover:underline"
         >
-          ← Go Back
+          ← Return to job listings
         </button>
       </div>
     );
+  }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+    <div className="max-w-3xl mx-auto space-y-6">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-4 hover:underline"
+        className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition"
       >
-        <ArrowLeftIcon className="w-4 h-4" /> Back to Jobs
+        <ArrowLeftIcon className="w-3.5 h-3.5" />
+        <span>Back to listings</span>
       </button>
 
-      <div className="flex items-center gap-3 mb-3">
-        <BriefcaseIcon className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          {job.title}
-        </h1>
-      </div>
+      <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-6 sm:p-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+              {job.role || "General Position"}
+            </span>
+            <h1 className="text-2xl font-bold tracking-tight text-white mt-2">
+              {job.title}
+            </h1>
+            <p className="text-xs text-zinc-400 mt-1">
+              Posted by {job.recruiterId?.name || "Verified Organization"} {job.recruiterId?.email ? `(${job.recruiterId.email})` : ""}
+            </p>
+          </div>
 
-      <p className="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-        {job.description}
-      </p>
+          <button
+            onClick={handleApply}
+            disabled={applying}
+            className="inline-flex items-center justify-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200 px-5 py-2.5 rounded-lg text-xs font-semibold transition shadow-sm disabled:opacity-50 self-start sm:self-auto"
+          >
+            {applying ? (
+              <>
+                <Loader2Icon className="w-3.5 h-3.5 animate-spin" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <SparklesIcon className="w-3.5 h-3.5" />
+                <span>Apply with Resume</span>
+              </>
+            )}
+          </button>
+        </div>
 
-      <div className="text-gray-600 dark:text-gray-400 space-y-1 mb-8">
-        <p className="flex items-center gap-2">
-          <BuildingIcon className="w-4 h-4" />
-          <span>{job.recruiterId?.name || "Anonymous Recruiter"}</span>
-        </p>
+        {/* Metadata Tags */}
+        <div className="flex flex-wrap gap-2 text-xs pt-4 border-t border-zinc-800/80">
+          <span className="px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-md">
+            Type: {job.type}
+          </span>
+          <span className="px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded-md">
+            Experience: {job.experienceLevel}
+          </span>
+          <span className="px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 rounded-md flex items-center gap-1">
+            <MapPinIcon className="w-3 h-3 text-zinc-500" /> {job.location}
+          </span>
+          <span className="px-2.5 py-1 bg-zinc-950 border border-zinc-800 text-zinc-500 rounded-md flex items-center gap-1 font-mono text-[11px]">
+            <CalendarIcon className="w-3 h-3 text-zinc-500" />
+            {new Date(job.createdAt).toLocaleDateString()}
+          </span>
+        </div>
 
-        {job.location && (
-          <p className="flex items-center gap-2">
-            <MapPinIcon className="w-4 h-4" />
-            <span>{job.location}</span>
+        {/* Full Description */}
+        <div className="pt-4 border-t border-zinc-800/80 space-y-3">
+          <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">
+            About the Role & Technical Requirements
+          </h2>
+          <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line bg-zinc-950/60 p-5 rounded-lg border border-zinc-800/60">
+            {job.description}
+          </div>
+        </div>
+
+        {/* Bottom Apply CTA */}
+        <div className="pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+          <p className="text-[11px] text-zinc-500">
+            Your uploaded active resume will be submitted automatically.
           </p>
-        )}
-
-        <p>
-          <strong>Role:</strong> {job.role || "N/A"} | <strong>Type:</strong>{" "}
-          {job.type || "N/A"} | <strong>Experience:</strong>{" "}
-          {job.experienceLevel || "N/A"}
-        </p>
+          <button
+            onClick={handleApply}
+            disabled={applying}
+            className="inline-flex items-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200 px-5 py-2.5 rounded-lg text-xs font-semibold transition shadow-sm disabled:opacity-50"
+          >
+            {applying ? "Submitting Application..." : "Submit Application"}
+          </button>
+        </div>
       </div>
-
-      <button
-        onClick={handleApply}
-        disabled={applying}
-        className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-all ${
-          applying ? "opacity-70 cursor-not-allowed" : ""
-        }`}
-      >
-        {applying ? "Applying..." : "Apply Now"}
-      </button>
     </div>
   );
 }

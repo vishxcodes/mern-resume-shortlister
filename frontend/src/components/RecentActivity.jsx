@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axiosInstance";
+import { ClockIcon, CheckCircle2Icon, UserIcon } from "lucide-react";
 
 export default function RecentActivity() {
   const [activity, setActivity] = useState([]);
@@ -21,26 +22,60 @@ export default function RecentActivity() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
-      <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
+    <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+          <p className="text-xs text-zinc-500">Live submission updates</p>
+        </div>
+      </div>
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading activity...</p>
+        <p className="text-xs text-zinc-500 py-6 text-center">Loading activity feed...</p>
       ) : activity.length === 0 ? (
-        <p className="text-sm text-gray-500">No recent activity</p>
+        <div className="py-8 text-center text-xs text-zinc-500">
+          <ClockIcon className="w-6 h-6 text-zinc-700 mx-auto mb-2" />
+          <p>No recent activity detected.</p>
+        </div>
       ) : (
         <ul className="space-y-3">
-          {activity.map((item, index) => (
-            <li
-              key={index}
-              className="text-sm text-gray-700 dark:text-gray-300"
-            >
-              {item.type === "applied" ? "🧑‍🎓" : "⭐"}{" "}
-              <span className="font-medium">{item.candidateName}</span>{" "}
-              {item.type === "applied" ? "applied to" : "was shortlisted for"}{" "}
-              <span className="font-medium">{item.jobTitle}</span>
-            </li>
-          ))}
+          {activity.map((item, index) => {
+            const isShortlisted = item.type === "shortlisted";
+            return (
+              <li
+                key={index}
+                className="flex items-start gap-3 p-2.5 rounded-lg bg-zinc-950/40 border border-zinc-800/40 text-xs text-zinc-300"
+              >
+                <div
+                  className={`mt-0.5 p-1 rounded-md border ${
+                    isShortlisted
+                      ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40"
+                      : "bg-zinc-800/80 text-zinc-300 border-zinc-700/50"
+                  }`}
+                >
+                  {isShortlisted ? (
+                    <CheckCircle2Icon className="w-3.5 h-3.5" />
+                  ) : (
+                    <UserIcon className="w-3.5 h-3.5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate">
+                    <span className="font-semibold text-zinc-100">{item.candidateName}</span>{" "}
+                    <span className="text-zinc-500">
+                      {isShortlisted ? "was shortlisted for" : "applied for"}
+                    </span>{" "}
+                    <span className="text-zinc-300 font-medium">{item.jobTitle}</span>
+                  </p>
+                  {item.time && (
+                    <p className="text-[10px] text-zinc-600 mt-0.5 font-mono">
+                      {new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

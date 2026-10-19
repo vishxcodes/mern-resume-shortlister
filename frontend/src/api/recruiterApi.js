@@ -1,11 +1,9 @@
-import axios from "axios";
-
-const API = "http://localhost:8000/api";
+import API from "./axiosInstance";
 
 export const createJob = (recruiterId, data) =>
-  axios.post(`${API}/jobs`, { recruiterId, ...data });
+  API.post("/jobs", { recruiterId, ...data });
 
-export const getJobs = () => axios.get(`${API}/jobs`);
+export const getJobs = () => API.get("/jobs");
 
 export const getRankedResumes = (jobId) =>
-  axios.get(`${API}/jobs/rank/${jobId}`);
+  API.get(`/jobs/rank/${jobId}`);

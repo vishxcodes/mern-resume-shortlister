@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import API from "../../api/axiosInstance";
 import { toast } from "react-toastify";
 import {
-  UserIcon,
   MailIcon,
   FileTextIcon,
   Loader2Icon,
-  CheckCircleIcon,
+  CheckCircle2Icon,
   XCircleIcon,
+  ClockIcon,
+  UsersIcon,
   BriefcaseIcon,
 } from "lucide-react";
 
@@ -22,136 +23,211 @@ export default function RecruiterApplicants() {
 
   useEffect(() => {
     const fetchApplicants = async () => {
-  setLoading(true);
-
-  try {
-    let response;
-
-    if (jobId) {
-      // 🔹 Fetch applicants for a specific job
-      response = await API.get(`/applications/job/${jobId}`);
-      setApplicants(Array.isArray(response.data) ? response.data : []);
-    } else {
-      // 🔹 Fetch all applicants for recruiter
-      response = await API.get(`/applications/recruiter`);
-
-      // backend returns an array here
-      setApplicants(Array.isArray(response.data) ? response.data : []);
-    }
-  } catch (err) {
-    toast.error("Error fetching applicants");
-    console.error("Error fetching applicants:", err);
-    setApplicants([]); // safety fallback
-  } finally {
-    setLoading(false);
-  }
-};
+      setLoading(true);
+      try {
+        let response;
+        if (jobId) {
+          response = await API.get(`/applications/job/${jobId}`);
+        } else {
+          response = await API.get(`/applications/recruiter`);
+        }
+        setApplicants(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        toast.error("Error fetching applicants");
+        console.error("Error fetching applicants:", err);
+        setApplicants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchApplicants();
   }, [jobId]);
 
   const handleStatusChange = async (appId, newStatus) => {
-    setUpdatingId(appId);
     try {
+      setUpdatingId(appId);
       const { data } = await API.patch(`/applications/${appId}/status`, { status: newStatus });
-      toast.success(`Status updated to ${newStatus}`);
       setApplicants((prev) =>
-        prev.map((a) => (a._id === appId ? { ...a, status: newStatus } : a))
+        prev.map((app) => (app._id === appId ? { ...app, status: newStatus } : app))
       );
+      toast.success(data.message || `Application marked as ${newStatus}`);
     } catch (err) {
-      toast.error("Error updating status");
-      console.error("Error updating applicant status:", err);
+      toast.error(err.response?.data?.error || "Error updating status");
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
+  const getStatusBadge = (status) => {
+    const s = (status || "").toLowerCase();
+    switch (s) {
       case "shortlisted":
-        return "text-green-600 dark:text-green-400";
-      case "rejected":
-        return "text-red-600 dark:text-red-400";
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/40 text-emerald-400 border border-emerald-800/40">
+            <CheckCircle2Icon className="w-3 h-3" /> Shortlisted
+          </span>
+        );
       case "accepted":
-        return "text-blue-600 dark:text-blue-400";
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-700/50">
+            <CheckCircle2Icon className="w-3 h-3" /> Accepted
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-400 border border-rose-900/40">
+            <XCircleIcon className="w-3 h-3" /> Rejected
+          </span>
+        );
       default:
-        return "text-gray-600 dark:text-gray-400";
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60">
+            <ClockIcon className="w-3 h-3" /> Applied
+          </span>
+        );
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center mt-10">
-        <Loader2Icon className="animate-spin w-8 h-8 text-blue-500" />
-      </div>
-    );
-
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">
-        {jobId ? "Job Applicants" : "All Applicants"}
-      </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            {jobId ? "Job Applicants" : "All Applicants"}
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            {jobId
+              ? "Reviewing submissions for this specific position"
+              : "Review, evaluate resumes, and manage hiring candidate progression."}
+          </p>
+        </div>
+        {jobId && (
+          <Link
+            to="/recruiter/applicants"
+            className="text-xs text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg transition self-start sm:self-auto"
+          >
+            ← View All Applicants
+          </Link>
+        )}
+      </div>
 
-      {applicants.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">No applicants found.</p>
+      {loading ? (
+        <div className="flex items-center gap-2 text-xs text-zinc-500 py-12 justify-center">
+          <Loader2Icon className="w-4 h-4 animate-spin text-zinc-400" />
+          <span>Loading applicants...</span>
+        </div>
+      ) : applicants.length === 0 ? (
+        <div className="p-12 text-center rounded-xl bg-zinc-900/40 border border-zinc-800/80">
+          <UsersIcon className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-zinc-200">No applicants yet</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+            Candidates who apply to your posted positions will appear here with parsed resume links and qualification statuses.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {applicants.map((app) => (
-            <div
-              key={app._id}
-              className="p-6 bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
-            >
-              {/* Job Info */}
-              <div className="flex items-center gap-2 mb-3">
-                <BriefcaseIcon className="w-5 h-5 text-blue-500" />
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {app.jobId?.title || "Unknown Job"}
-                </p>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {applicants.map((app) => {
+            const isUpdating = updatingId === app._id;
+            const targetUrl = app.resumeId?.resumeUrl || app.resumeId?.fileUrl;
+            const finalHref = targetUrl
+              ? targetUrl.startsWith("http")
+                ? targetUrl
+                : `http://localhost:8000/${targetUrl}`
+              : null;
 
-              {/* Candidate Info */}
-              <div className="flex items-center gap-3 mb-2">
-                <UserIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-xl font-semibold">
-                  {app.candidateId?.name || "Unknown Candidate"}
-                </h3>
-              </div>
+            return (
+              <div
+                key={app._id}
+                className="p-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl hover:border-zinc-700/80 transition flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        {app.candidateId?.name || "Unknown Candidate"}
+                      </h3>
+                      <p className="text-xs text-zinc-500 flex items-center gap-1.5 mt-0.5">
+                        <MailIcon className="w-3.5 h-3.5 text-zinc-600" />
+                        <span>{app.candidateId?.email || "N/A"}</span>
+                      </p>
+                    </div>
+                    {getStatusBadge(app.status)}
+                  </div>
 
-              <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-2 mb-2">
-                <MailIcon className="w-4 h-4" /> {app.candidateId?.email || "N/A"}
-              </p>
+                  {app.jobId?.title && (
+                    <div className="my-3 py-1.5 px-2.5 rounded bg-zinc-950/70 border border-zinc-800/60 flex items-center gap-2 text-xs text-zinc-400">
+                      <BriefcaseIcon className="w-3.5 h-3.5 text-zinc-500" />
+                      <span className="font-medium text-zinc-300">{app.jobId.title}</span>
+                      {app.jobId.role && (
+                        <span className="text-zinc-600 font-mono">({app.jobId.role})</span>
+                      )}
+                    </div>
+                  )}
 
-              {app.resumeId?.fileUrl && (
-                <a
-                  href={`http://localhost:8000/${app.resumeId.fileUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline text-sm mb-3"
-                >
-                  <FileTextIcon className="w-4 h-4" /> View Resume
-                </a>
-              )}
-
-              {/* Status Section */}
-              <div className="flex items-center justify-between mt-4">
-                <div className={`flex items-center gap-2 text-sm font-medium ${getStatusColor(app.status)}`}>
-                  <span className="capitalize">{app.status}</span>
+                  {finalHref && (
+                    <div className="mt-3">
+                      <a
+                        href={finalHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 px-3 py-1.5 rounded-lg border border-zinc-700/60 transition"
+                      >
+                        <FileTextIcon className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>View Parsed Resume</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
 
-                <select
-                  disabled={updatingId === app._id}
-                  value={app.status}
-                  onChange={(e) => handleStatusChange(app._id, e.target.value)}
-                  className="p-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="applied">Applied</option>
-                  <option value="shortlisted">Shortlisted</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="accepted">Accepted</option>
-                </select>
+                {/* Status action buttons */}
+                <div className="pt-4 mt-4 border-t border-zinc-800/80 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-[11px] text-zinc-500 font-mono">
+                    Applied {new Date(app.createdAt).toLocaleDateString()}
+                  </span>
+
+                  <div className="flex items-center gap-1.5">
+                    {isUpdating ? (
+                      <Loader2Icon className="w-4 h-4 animate-spin text-zinc-400" />
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(app._id, "shortlisted")}
+                          className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                            app.status === "shortlisted"
+                              ? "bg-emerald-950/60 text-emerald-300 border border-emerald-700"
+                              : "text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
+                          }`}
+                        >
+                          Shortlist
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(app._id, "accepted")}
+                          className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                            app.status === "accepted"
+                              ? "bg-emerald-950/60 text-emerald-300 border border-emerald-700"
+                              : "text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800"
+                          }`}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(app._id, "rejected")}
+                          className={`px-2 py-1 rounded text-[11px] font-medium transition ${
+                            app.status === "rejected"
+                              ? "bg-rose-950/60 text-rose-300 border border-rose-900"
+                              : "text-zinc-400 hover:text-rose-400 bg-zinc-900 border border-zinc-800 hover:bg-rose-950/20"
+                          }`}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

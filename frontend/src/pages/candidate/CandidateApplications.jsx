@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../../api/axiosInstance";
-import { BriefcaseIcon, ClockIcon, CheckCircleIcon, XCircleIcon } from "lucide-react";
+import { BriefcaseIcon, ClockIcon, CheckCircle2Icon, XCircleIcon, Loader2Icon, ArrowRightIcon } from "lucide-react";
 
 export default function CandidateApplications() {
   const [applications, setApplications] = useState([]);
@@ -11,7 +11,7 @@ export default function CandidateApplications() {
     const fetchApplications = async () => {
       try {
         const { data } = await API.get("/applications/my-applications");
-        setApplications(data);
+        setApplications(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching applications:", err);
       } finally {
@@ -22,30 +22,36 @@ export default function CandidateApplications() {
   }, []);
 
   const getStatusBadge = (status) => {
-    const base = "px-3 py-1 rounded-full text-sm font-medium";
-    switch (status) {
-      case "Applied":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "applied":
         return (
-          <span className={`${base} bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300`}>
-            <ClockIcon className="inline w-4 h-4 mr-1" /> Applied
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60">
+            <ClockIcon className="w-3 h-3 text-zinc-400" /> Applied
           </span>
         );
-      case "Shortlisted":
+      case "shortlisted":
         return (
-          <span className={`${base} bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300`}>
-            <CheckCircleIcon className="inline w-4 h-4 mr-1" /> Shortlisted
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/40 text-emerald-400 border border-emerald-800/40">
+            <CheckCircle2Icon className="w-3 h-3 text-emerald-400" /> Shortlisted
           </span>
         );
-      case "Rejected":
+      case "accepted":
         return (
-          <span className={`${base} bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300`}>
-            <XCircleIcon className="inline w-4 h-4 mr-1" /> Rejected
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-700/50">
+            <CheckCircle2Icon className="w-3 h-3 text-emerald-300" /> Accepted
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-950/40 text-rose-400 border border-rose-900/40">
+            <XCircleIcon className="w-3 h-3 text-rose-400" /> Rejected
           </span>
         );
       default:
         return (
-          <span className={`${base} bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300`}>
-            Pending
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700/60">
+            {status || "Pending"}
           </span>
         );
     }
@@ -53,39 +59,77 @@ export default function CandidateApplications() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-blue-700 dark:text-blue-400">My Applications</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          My Applications
+        </h1>
+        <p className="text-xs text-zinc-400 mt-1">
+          Review the status of jobs you have applied for and track recruiter updates.
+        </p>
+      </div>
 
       {loading ? (
-        <p className="text-gray-500 dark:text-gray-400">Loading applications...</p>
+        <div className="flex items-center gap-2 text-xs text-zinc-500 py-12 justify-center">
+          <Loader2Icon className="w-4 h-4 animate-spin text-zinc-400" />
+          <span>Loading applications...</span>
+        </div>
       ) : applications.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400">You haven’t applied for any jobs yet.</p>
+        <div className="p-12 text-center rounded-xl bg-zinc-900/40 border border-zinc-800/80">
+          <BriefcaseIcon className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-zinc-200">No applications submitted yet</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+            Browse available opportunities and apply using your active resume to start tracking submissions here.
+          </p>
+          <Link
+            to="/candidate/jobs"
+            className="mt-4 inline-flex items-center gap-2 bg-white text-zinc-950 hover:bg-zinc-200 px-4 py-2 rounded-lg text-xs font-semibold transition shadow-sm"
+          >
+            <span>Browse Jobs</span>
+            <ArrowRightIcon className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {applications.map((app) => (
             <div
               key={app._id}
-              className="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transition-colors duration-300"
+              className="p-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl hover:border-zinc-700/80 transition flex flex-col justify-between"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <BriefcaseIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {app.jobId?.title || "Unknown Job"}
-                </h3>
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-sm font-semibold text-white tracking-tight">
+                    {app.jobId?.title || "Position Removed"}
+                  </h3>
+                  {getStatusBadge(app.status)}
+                </div>
+
+                <p className="text-xs text-zinc-400 mb-3">
+                  {app.jobId?.role || "General"} • {app.jobId?.type || "Remote"} • {app.jobId?.location || "Remote"}
+                </p>
+
+                {app.jobId?.description && (
+                  <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed mb-4">
+                    {app.jobId.description}
+                  </p>
+                )}
               </div>
 
-              <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
-                {app.jobId?.role || "N/A"} | {app.jobId?.type || "N/A"} |{" "}
-                {app.jobId?.location || "N/A"}
-              </p>
+              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-500">
+                <span className="text-[11px] font-mono">
+                  Submitted {new Date(app.createdAt).toLocaleDateString()}
+                </span>
 
-              <div className="flex items-center justify-between mt-4">
-                {getStatusBadge(app.status)}
-                <Link
-                  to={`/candidate/jobs/${app.jobId?._id}`}
-                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-sm"
-                >
-                  View Job →
-                </Link>
+                {app.jobId?._id ? (
+                  <Link
+                    to={`/candidate/jobs/${app.jobId._id}`}
+                    className="inline-flex items-center gap-1 text-xs text-zinc-300 hover:text-white transition"
+                  >
+                    <span>View Posting</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <span className="text-xs text-zinc-600">Unavailable</span>
+                )}
               </div>
             </div>
           ))}
