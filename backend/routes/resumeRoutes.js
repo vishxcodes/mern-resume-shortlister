@@ -5,10 +5,13 @@ import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 import upload from "../middleware/uploadMiddleware.js";
 import Resume from "../models/Resume.js";
-import cloudinary from "../config/cloudinary.js";
+import cloudinary, { initCloudinary } from "../config/cloudinary.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// Ensure Cloudinary is initialized
+initCloudinary();
 
 // ➤ Upload resume (Candidate Only)
 router.post(
@@ -37,39 +40,52 @@ router.post(
         console.warn("Text extraction warning:", parseErr.message);
       }
 
-      // 2️⃣ Upload file (Cloudinary if valid credentials exist, else local storage fallback)
+      // 2️⃣ Upload file to Cloudinary (Primary target)
       let resumeUrl = "";
       let fileUrl = "";
 
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+      const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+      const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+
       const hasCloudinary =
-        Boolean(process.env.CLOUDINARY_CLOUD_NAME) &&
-        Boolean(process.env.CLOUDINARY_API_KEY) &&
-        Boolean(process.env.CLOUDINARY_API_SECRET) &&
-        !process.env.CLOUDINARY_CLOUD_NAME.includes("process.env") &&
-        !process.env.CLOUDINARY_CLOUD_NAME.includes("<your-");
+        Boolean(cloudName && apiKey && apiSecret) &&
+        !cloudName.includes("process.env") &&
+        !cloudName.includes("<your-");
 
       if (hasCloudinary) {
         try {
+          console.log(`📤 Uploading resume to Cloudinary for user: ${req.user._id}`);
           const uploadResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              {
-                resource_type: "raw",
-                folder: "resumes",
-              },
-              (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-              }
-            ).end(req.file.buffer);
+            cloudinary.uploader
+              .upload_stream(
+                {
+                  resource_type: "auto",
+                  folder: "resumes",
+                  use_filename: true,
+                  unique_filename: true,
+                  filename_override: req.file.originalname,
+                },
+                (error, result) => {
+                  if (error) reject(error);
+                  else resolve(result);
+                }
+              )
+              .end(req.file.buffer);
           });
+
           resumeUrl = uploadResult.secure_url;
           fileUrl = uploadResult.secure_url;
+          console.log(`✅ Resume uploaded to Cloudinary: ${resumeUrl}`);
         } catch (cloudErr) {
-          console.warn("Cloudinary upload failed, falling back to local file storage:", cloudErr.message);
+          console.error("❌ Cloudinary upload failed:", cloudErr.message);
+          // If Cloudinary was configured but failed, report error instead of silent fallback
+          // or fallback only if local development requires it
+          console.warn("⚠️ Falling back to local file storage temporarily.");
         }
       }
 
-      // Local storage fallback
+      // Fallback to local storage if Cloudinary not configured or failed
       if (!resumeUrl) {
         const uploadsDir = path.join(process.cwd(), "uploads");
         if (!fs.existsSync(uploadsDir)) {
@@ -82,6 +98,7 @@ router.post(
         const port = process.env.PORT || 8000;
         fileUrl = `uploads/${safeName}`;
         resumeUrl = `http://localhost:${port}/uploads/${safeName}`;
+        console.log(`📁 Resume saved to local storage: ${filePath}`);
       }
 
       // 3️⃣ Save or update resume record in DB (one resume per candidate)
